@@ -73,7 +73,7 @@ sequenceDiagram
     participant INSEC
     autonumber
     
-    rect rgb(220, 13, 120)
+    rect rgb(241, 192, 217)
     loop An Ethernet packet from secure to insecure network
         SEC->>MITM: Ethernet frame
         activate MITM
@@ -107,7 +107,7 @@ sequenceDiagram
     participant INSEC
     
     autonumber
-   rect rgb(57, 115, 32)
+   rect rgb(204, 239, 189)
     loop An Ethernet packet from insecure to secure network
         INSEC->>MITM: Ethernet frame
         activate MITM
