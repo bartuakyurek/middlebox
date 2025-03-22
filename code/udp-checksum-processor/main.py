@@ -1,17 +1,16 @@
 import os
 import random
 import asyncio
+import argparse 
 
-import nats
 from scapy.all import Ether
 from nats.aio.client import Client as NATS
 
 class UDP_Checksum_Processor:
-    def __init__(self, nc, topic_dict):
+    def __init__(self, nc, topic_dict, mean_delay=0):
         self.nc = nc
         self.topic_dict = topic_dict
-
-        self.delay_mean = 10e-6
+        self.mean_delay = mean_delay
 
     async def subscribe(self):
         # Subscribe to inpktsec and inpktinsec topics
@@ -36,13 +35,14 @@ class UDP_Checksum_Processor:
         packet = Ether(data)
         print(packet.show())
 
-        delay = random.expovariate(1. / self.delay_mean)
+        #delay = random.expovariate(1. / self.mean_delay)
+        delay = random.uniform(0, self.mean_delay * 2)
         await asyncio.sleep(delay)
         
         await self.publish(subject, msg.data)
 
 
-async def run():
+async def run(mean_delay=0):
     nc = NATS()
 
     nats_url = os.getenv("NATS_SURVEYOR_SERVERS", "nats://nats:4222")
@@ -53,7 +53,7 @@ async def run():
                     "inpktinsec" : "outpktsec"
     }
 
-    processor = UDP_Checksum_Processor(nc, topic_dict)
+    processor = UDP_Checksum_Processor(nc, topic_dict, mean_delay)
     await processor.subscribe()
 
     try:
@@ -66,6 +66,13 @@ async def run():
 
 
 if __name__ == '__main__':
-    asyncio.run(run())
+
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('-d', '--delay', type=float, default=0, help='Specify the average delay to be added before sending packets in seconds.')
+
+    args = parser.parse_args()
+    
+    print("Running processor with delay ", args.delay)
+    asyncio.run(run(args.delay))
 
  
