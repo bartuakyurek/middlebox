@@ -78,17 +78,7 @@ class CovertReceiver:
             print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
 
     def start_udp_listener(self):
-
-        """while True:
-                data, addr = self.sock.recvfrom(4096)
-                print(f"Received {len(data)} bytes from {addr}")
-                print(data.decode())
-
-                # Send acknowledgment
-                data = "ACK".encode()
-                if data:
-                    sent = self.sock.sendto(data, addr)
-                    print(f"Sent {sent} bytes (ACK) back to {addr}")"""
+        print("Receiver is running...")
         sniff(filter=f"udp and dst port {self.port}", prn=self.packet_callback, store=False)        
 
     
@@ -98,7 +88,7 @@ class CovertReceiver:
 if __name__ == "__main__":
     
     receiver = CovertReceiver(port=8888)
-    print("Receiver is running...")
+    
     try:
         receiver.start_udp_listener()
     except KeyboardInterrupt:
