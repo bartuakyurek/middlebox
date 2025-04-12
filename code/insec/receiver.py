@@ -15,10 +15,12 @@ def bits_to_message(bits: str)->str:
 
 class CovertReceiver:
 
-    def __init__(self, port=8888, dest_port=9999):
+    def __init__(self, port=8888, dest_port=9999, verbose=False):
+        self.verbose = verbose
         self.port = port
         self.dest_port = dest_port
         self.sock = self.create_and_bind_socket(port)
+        
 
         self.HEADER_LEN = 8 # This must the same with CovertSender's TODO: share this variable across containers
         self.covert_bits = {} # Store in a dictionary because number of bits is unknown
@@ -28,12 +30,12 @@ class CovertReceiver:
         server_address = ( '', port)
         sock.bind(server_address)
 
-        print(f"UDP listener started on port {port}")
+        if self.verbose: print(f"UDP listener started on port {port}")
         return sock
 
     def shutdown(self):
         self.sock.close()
-        print("[INFO] Socket closed.")
+        if self.verbose: print("[INFO] Socket closed.")
 
     def get_covert_msg(self):
         # First HEADER_LEN bits represent the actual length of covert message
@@ -44,10 +46,12 @@ class CovertReceiver:
             length = int(bit_str[:covert_start], 2) # number of chars in covert message
             covert_end = covert_start + (length * 8) # 8 bits per char
 
-            print("Covert message starts at ", covert_start)
-            print("Covert message ends at ", covert_end)
-            print("bit_str:", bit_str)
-            print("length:", length)
+            if self.verbose:
+                print("Covert message starts at ", covert_start)
+                print("Covert message ends at ", covert_end)
+                print("bit_str:", bit_str)
+                print("length:", length)
+
             bit_str = bit_str[covert_start:covert_end]
             return bits_to_message(bit_str)
         return ""
@@ -74,22 +78,22 @@ class CovertReceiver:
             if seq_number == -1:
                 print(f"[WARNING] Invalid packet received: {payload}")
                 return
-            print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
+            if self.verbose: print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
             
             # Extract covert bit and save it
             covert_bit = '1' if packet[UDP].chksum != 0 else '0' # TODO: is 0 = 0?
             self.covert_bits[seq_number] = covert_bit
-            print(f"[INFO] Covert bit {covert_bit} saved for sequence number {seq_number}")
+            if self.verbose: print(f"[INFO] Covert bit {covert_bit} saved for sequence number {seq_number}")
 
             # Send acknowledgment
             sender_ip = packet[IP].src
             #print("dst ip:", packet[IP].dst)
             #print("src ip:", packet[IP].src)
             sent = self.sock.sendto("ACK".encode(), (sender_ip, self.dest_port))
-            print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
+            if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
 
     def start_udp_listener(self):
-        print("Receiver is running...")
+        if self.verbose: print("Receiver is running...")
         sniff(filter=f"udp and dst port {self.port}", prn=self.packet_callback, store=False)        
 
     
@@ -98,7 +102,7 @@ class CovertReceiver:
 
 if __name__ == "__main__":
     
-    receiver = CovertReceiver(port=8888)
+    receiver = CovertReceiver(port=8888, dest_port=9999, verbose=True)
     
     try:
         receiver.start_udp_listener()
