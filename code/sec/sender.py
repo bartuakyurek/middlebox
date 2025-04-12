@@ -73,6 +73,7 @@ class CovertSender:
              print(f"[WARNING] Host IP changed to {host_ip}")
 
          sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP socket
+         if self.verbose: print("[INFO] Socket created successfully.")
          return sock
     
     def shutdown(self):
@@ -83,8 +84,6 @@ class CovertSender:
         # If the given message cannot fit into a single packet
         # it splits up and sends multiple packets
             
-        if self.verbose: print("[INFO] Socket created successfully.")
-
         encoded_msg = message.encode() 
         encoded_msg_chunks = split_message_into_chunks(encoded_msg, self.max_payload-8) # -8 is to be able to add sequence number in the beginning 
         if self.verbose: print(f"[INFO] Message is splitted into {len(encoded_msg_chunks)} chunks.")
