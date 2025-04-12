@@ -126,8 +126,12 @@ class CovertSender:
 
         # Send message packets
         #for i, msg in enumerate(encoded_msg_chunks):
-        while self.current_bit_idx < len(encoded_msg_chunks):    
-            
+
+        # TODO : Rename self.current_bit_idx to self.current_packet_idx
+        # WARNING: This assumes the rest of the message after all the
+        # covert bits are sent, can be dropped. (See get_ACK() Warning)
+        while self.window_start < self.total_covert_bits: #len(encoded_msg_chunks):    
+            print("Current bit index:", self.current_bit_idx, " ", len(encoded_msg_chunks))
             with self.lock: 
                 # Send all the packets within the window
                 while self.current_bit_idx < self.window_start + self.window_size:
