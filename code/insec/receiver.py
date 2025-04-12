@@ -1,6 +1,6 @@
 
 import socket
-from scapy.all import IP, UDP, Raw, send
+from scapy.all import IP, UDP, Raw, send, sniff
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -15,8 +15,9 @@ def bits_to_message(bits: str)->str:
 
 class CovertReceiver:
 
-    def __init__(self, port=8888):
+    def __init__(self, port=8888, dest_port=8888):
         self.port = port
+        self.dest_port = dest_port
         self.sock = self.create_and_bind_socket(port)
 
         self.covert_bits = {} # Store in a dictionary because number of bits is unknown
@@ -39,8 +40,21 @@ class CovertReceiver:
             return bits_to_message(bit_str)
         return ""
     
+    def packet_callback(self, packet):
+        if UDP in packet and Raw in packet:
+            # Analyze packet
+            payload = bytes(packet[Raw])
+            seq_number = None
+            print(f"Received packet with sequence number {seq_number}: {payload}")
+            
+            # Send acknowledgment
+            sender_ip = packet[IP].src
+            sent = self.sock.sendto("ACK".encode(), (sender_ip, self.dest_port))
+            print(f"Sent {sent} bytes (ACK) back to {sender_ip}")
+
     def start_udp_listener(self):
-        while True:
+
+        """while True:
                 data, addr = self.sock.recvfrom(4096)
                 print(f"Received {len(data)} bytes from {addr}")
                 print(data.decode())
@@ -49,7 +63,8 @@ class CovertReceiver:
                 data = "ACK".encode()
                 if data:
                     sent = self.sock.sendto(data, addr)
-                    print(f"Sent {sent} bytes (ACK) back to {addr}")
+                    print(f"Sent {sent} bytes (ACK) back to {addr}")"""
+        sniff(filter=f"udp and port {self.port}", prn=self.packet_callback, store=False)        
 
     
 # ------------------------------------------------------------------------------------------------
