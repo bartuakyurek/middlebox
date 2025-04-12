@@ -9,7 +9,7 @@ class CovertReceiver:
 
     def __init__(self, port=8888):
         self.port = port
-        
+        self.sock = self.create_and_bind_socket(port)
 
     def create_and_bind_socket(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,27 +19,26 @@ class CovertReceiver:
         print(f"UDP listener started on port {port}")
         return sock
 
-    def _udp_loop(self, sock):
+    def _udp_loop(self):
         while True:
-                data, addr = sock.recvfrom(4096)
+                data, addr = self.sock.recvfrom(4096)
                 print(f"Received {len(data)} bytes from {addr}")
                 print(data.decode())
 
                 # Send acknowledgment
                 data = "ACK".encode()
                 if data:
-                    sent = sock.sendto(data, addr)
+                    sent = self.sock.sendto(data, addr)
                     print(f"Sent {sent} bytes (ACK) back to {addr}")
 
     def start_udp_listener(self):
         try:
-            sock = self.create_and_bind_socket(self.port)
-            self._udp_loop(sock)
+            self._udp_loop()
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
-            sock.close()
-            print("Socket closed.")
+            self.sock.close()
+            print("[INFO] Socket closed.")
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
