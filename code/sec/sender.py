@@ -73,7 +73,7 @@ class CovertSender:
             raise ValueError("SECURENET_HOST_IP environment variable is not set.")
         return host
     
-    def create_udp_socket(self, host_ip=None):
+    def create_udp_socket(self, host_ip):
          if host_ip is None: host_ip = self.recv_ip
          else: 
              self.recv_ip = host_ip
@@ -88,16 +88,26 @@ class CovertSender:
 
 
     def get_ACK(self):
-        pass # TODO: Receive ACK
+
+        while self.current_bit_idx < self.total_covert_bits:
+            data, addr = self.ack_sock.recvfrom(4096)
+            if self.verbose: print(f"[INFO] ACK ({data}) received from {addr}")
+
+            # TODO: save which packet ACK belongs to
+
 
     def send(self, message):
         # Sends a legitimate message
         # If the given message cannot fit into a single packet
         # it splits up and sends multiple packets
-            
         encoded_msg = message.encode() 
         encoded_msg_chunks = split_message_into_chunks(encoded_msg, self.max_payload-8) # -8 is to be able to add sequence number in the beginning 
         if self.verbose: print(f"[INFO] Message is splitted into {len(encoded_msg_chunks)} chunks.")
+
+        # Create a daemon to receive ACKs continuously
+        ack_thread = threading.Thread(target=self.get_ACK, daemon=True)
+        ack_thread.start()
+        if self.verbose: print("[INFO] ACK thread started.")
 
         # Send message packets
         for i, msg in enumerate(encoded_msg_chunks):
@@ -155,8 +165,8 @@ if __name__ == '__main__':
 
     # WARNING: If the length of the carrier message is too short
     # not all the covert bits will be sent. 
-    carrier_msg = "Hello, this is a long message. " * 100
-    covert_msg = "This is a covert message." 
+    carrier_msg = "Hello, this is a long message. " * 20
+    covert_msg =  "cow" #"This is a covert message." 
     sender = CovertSender(covert_msg=covert_msg, verbose=True, timeout=5, 
                           MAX_UDP_PAYLOAD_SIZE=MAX_UDP_PAYLOAD_SIZE)
 
