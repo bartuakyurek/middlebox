@@ -128,7 +128,7 @@ class CovertSender:
         # WARNING: This assumes the rest of the message after all the
         # covert bits are sent, can be dropped. (See get_ACK() Warning)
         packet_timers = {}
-        while self.window_start < self.total_covert_bits: #len(encoded_msg_chunks):    
+        while self.cur_pkt_idx < self.total_covert_bits: #len(encoded_msg_chunks):    
             print("Current bit index:", self.cur_pkt_idx, " ", len(encoded_msg_chunks))
             with self.lock: 
                 # Send all the packets within the window
