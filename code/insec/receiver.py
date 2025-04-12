@@ -36,8 +36,19 @@ class CovertReceiver:
         print("[INFO] Socket closed.")
 
     def get_covert_msg(self):
+        # First HEADER_LEN bits represent the actual length of covert message
         if self.covert_bits:
             bit_str = ''.join(self.covert_bits[i] for i in sorted(self.covert_bits))
+            
+            covert_start = self.HEADER_LEN
+            length = int(bit_str[:covert_start], 2) # number of chars in covert message
+            covert_end = covert_start + (length * 8) # 8 bits per char
+
+            print("Covert message starts at ", covert_start)
+            print("Covert message ends at ", covert_end)
+            print("bit_str:", bit_str)
+            print("length:", length)
+            bit_str = bit_str[covert_start:covert_end]
             return bits_to_message(bit_str)
         return ""
     
