@@ -1,41 +1,55 @@
 
 import socket
+from scapy.all import IP, UDP, Raw, send
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 
-def create_and_bind_socket(port=8888):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_address = ( '', port)
-    sock.bind(server_address)
+class CovertReceiver:
 
-    print(f"UDP listener started on port {port}")
-    return sock
+    def __init__(self, port=8888):
+        self.port = port
+        self.sock = None
 
-def _udp_loop(sock):
-    while True:
-            data, addr = sock.recvfrom(4096)
-            print(f"Received {len(data)} bytes from {addr}")
-            print(data.decode())
+    def create_and_bind_socket(self, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        server_address = ( '', port)
+        sock.bind(server_address)
 
-            # Send acknowledgment
-            data = "ACK".encode()
-            if data:
-                sent = sock.sendto(data, addr)
-                print(f"Sent {sent} bytes (ACK) back to {addr}")
+        print(f"UDP listener started on port {port}")
+        return sock
 
-def start_udp_listener():
-    try:
-        sock = create_and_bind_socket()
-        _udp_loop(sock)
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        sock.close()
+    def _udp_loop(self, sock):
+        while True:
+                data, addr = sock.recvfrom(4096)
+                print(f"Received {len(data)} bytes from {addr}")
+                print(data.decode())
+
+                # Send acknowledgment
+                data = "ACK".encode()
+                if data:
+                    sent = sock.sendto(data, addr)
+                    print(f"Sent {sent} bytes (ACK) back to {addr}")
+
+    def start_udp_listener(self):
+        try:
+            sock = self.create_and_bind_socket(self.port)
+            self._udp_loop(sock)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            sock.close()
+            print("Socket closed.")
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 
 
 if __name__ == "__main__":
-    start_udp_listener()
+    
+    receiver = CovertReceiver(port=8888)
+    print("Receiver is running...")
+    try:
+        receiver.start_udp_listener()
+    except KeyboardInterrupt:
+        print("Receiver stopped.")
