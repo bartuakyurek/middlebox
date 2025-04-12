@@ -93,11 +93,10 @@ class CovertSender:
             msg_str = assign_sequence_number(msg.decode(), i)
             if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
 
-            while True: # Send a single packet until success (TODO: use threaded)
-                udp_status = self._udp_with_ACK(msg_str)
-                if udp_status == 0: break # Move on to next message
+            udp_status = self._send_packet(msg_str)
 
-    def _udp_with_ACK(self, message, max_resend=10)->int:
+    def _send_packet(self, message, max_resend=100)->int:
+        # Send packet using UDP with ACK
         # Returns 0 if message sent successfully
         # -1 if it cannot be delivered in max_resend trials.
         self.sock.settimeout(self.timeout)
