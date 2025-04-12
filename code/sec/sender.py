@@ -24,6 +24,11 @@ import argparse
 def assert_type(obj, desired_type, note=""):
     assert isinstance(obj, desired_type), f"[ERROR] Expected {note} to be type {desired_type}, got {type(obj)}"
 
+def message_to_bits(msg)->str:
+    # msg : str or bytes
+    if isinstance(msg, str): msg = msg.encode()
+    assert_type(msg, bytes, "message")
+    return ''.join(format(byte, '08b') for byte in msg)
 
 def split_message_into_chunks(encoded_message, chunk_size)->list:
     chunks = []
@@ -129,8 +134,9 @@ class CovertSender:
         assert len(covert_len_bits_str) <= self.HEADER_LEN, f"[ERROR] Length of the covert message exceeds maximum length allowed. At least {len(covert_len_bits_str)} bits needed, current header length is {self.HEADER_LEN}"
         covert_len_bits_str_padded = covert_len_bits_str.zfill(self.HEADER_LEN) # Pad remaining bits with zeroes
         
-        msg_bits_string = ''.join(format(byte, '08b') for byte in covert_bytes)
+        msg_bits_string = message_to_bits(covert_bytes)
         return covert_len_bits_str_padded + msg_bits_string
+
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
