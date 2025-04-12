@@ -67,7 +67,7 @@ class CovertSender:
         self.received_acks = {} # Store sequence numbers as well as their timestamps
         self.ack_sock = self.create_udp_socket('', self.port) # Socket dedicated to receive ACK
         
-        self.current_bit_idx = 0
+        self.cur_pkt_idx = 0
         self.window_start = 0
         self.window_size = window_size
         self.lock = threading.Lock()
@@ -95,7 +95,7 @@ class CovertSender:
         # Listen for ACKs until all the covert bits are sent
         # WARNING: This assumes the rest of the message is not ACKed
         # so some packets after the covert bits may be lost
-        while self.current_bit_idx < self.total_covert_bits:
+        while self.cur_pkt_idx < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
             seq_num = int(data.decode())
             if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
@@ -125,28 +125,25 @@ class CovertSender:
         if self.verbose: print("[INFO] ACK thread started.")
 
         # Send message packets
-        #for i, msg in enumerate(encoded_msg_chunks):
-
-        # TODO : Rename self.current_bit_idx to self.current_packet_idx
         # WARNING: This assumes the rest of the message after all the
         # covert bits are sent, can be dropped. (See get_ACK() Warning)
         while self.window_start < self.total_covert_bits: #len(encoded_msg_chunks):    
-            print("Current bit index:", self.current_bit_idx, " ", len(encoded_msg_chunks))
+            print("Current bit index:", self.cur_pkt_idx, " ", len(encoded_msg_chunks))
             with self.lock: 
                 # Send all the packets within the window
-                while self.current_bit_idx < self.window_start + self.window_size:
-                    msg = encoded_msg_chunks[self.current_bit_idx]
-                    msg_str = assign_sequence_number(msg.decode(), self.current_bit_idx)
+                while self.cur_pkt_idx < self.window_start + self.window_size:
+                    msg = encoded_msg_chunks[self.cur_pkt_idx]
+                    msg_str = assign_sequence_number(msg.decode(), self.cur_pkt_idx)
                     if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
 
-                    if self.current_bit_idx >= self.total_covert_bits:
+                    if self.cur_pkt_idx >= self.total_covert_bits:
                         if self.verbose: print("[INFO] All bits have been sent...")
                         bit = None
                     else:                
-                        bit = self.covert_bits_str[self.current_bit_idx]
+                        bit = self.covert_bits_str[self.cur_pkt_idx]
 
                     self._send_packet(msg_str, bit)
-                    self.current_bit_idx += 1
+                    self.cur_pkt_idx += 1
                 
                 # TODO : Validate ACKs 
 
