@@ -46,7 +46,7 @@ def assign_sequence_number(msg_str, seq_number)->str:
 
 
 class CovertSender:
-    def __init__(self, covert_msg, verbose=False, timeout=5, MAX_UDP_PAYLOAD_SIZE=1458):        
+    def __init__(self, covert_msg, verbose=False, timeout=5, MAX_UDP_PAYLOAD_SIZE=1458, port=8888, recv_port=8888):        
         self.verbose = verbose
         self.timeout = timeout
         self.max_payload = MAX_UDP_PAYLOAD_SIZE
@@ -60,7 +60,8 @@ class CovertSender:
         print(f"[INFO] Covert bits string: {self.covert_bits_str}")
         print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
 
-        self.port = 8888
+        self.port = port
+        self.recv_port = recv_port
         self.recv_ip = self.get_host()
         self.sock = self.create_socket()
         
@@ -113,7 +114,7 @@ class CovertSender:
         # Returns 0 if message sent successfully
         # -1 if it cannot be delivered in max_resend trials.
         ip = IP(dst=self.recv_ip)
-        udp = UDP(dport=self.port, sport=self.port)
+        udp = UDP(dport=self.recv_port, sport=self.port)
         # Covert bit as checksum field existence
         if cov_bit == '1' or cov_bit == None: # None when no covrt bit is sent
             udp.chksum = None  # Let OS/scapy compute it
@@ -124,7 +125,7 @@ class CovertSender:
         
         pkt = ip/udp/Raw(load=message)
         send(pkt, verbose=False)
-        if self.verbose: print(f"[INFO] Message sent to {self.recv_ip}:{self.port}")
+        if self.verbose: print(f"[INFO] Message sent to {self.recv_ip}:{self.recv_port}")
             
     def _convert_to_covert_bits_str(self, covert_msg_str, header_len)->str:
         assert_type(covert_msg_str, str, "covert message")

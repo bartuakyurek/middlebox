@@ -9,7 +9,7 @@ class CovertReceiver:
 
     def __init__(self, port=8888):
         self.port = port
-        self.sock = None
+        
 
     def create_and_bind_socket(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
