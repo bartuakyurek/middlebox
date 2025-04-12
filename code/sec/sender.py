@@ -127,6 +127,7 @@ class CovertSender:
         # Send message packets
         # WARNING: This assumes the rest of the message after all the
         # covert bits are sent, can be dropped. (See get_ACK() Warning)
+        packet_timers = {}
         while self.window_start < self.total_covert_bits: #len(encoded_msg_chunks):    
             print("Current bit index:", self.cur_pkt_idx, " ", len(encoded_msg_chunks))
             with self.lock: 
@@ -143,10 +144,16 @@ class CovertSender:
                         bit = self.covert_bits_str[self.cur_pkt_idx]
 
                     self._send_packet(msg_str, bit)
+                    packet_timers[self.cur_pkt_idx] = time.time()
                     self.cur_pkt_idx += 1
                 
-                # TODO : Validate ACKs 
-
+                # Timeout checks
+                for idx in range(self.window_start, self.cur_pkt_idx):
+                    if idx not in self.received_acks:
+                        if time.time() - packet_timers[idx] > self.timeout:
+                            if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
+                            self._send_packet(encoded_msg_chunks[idx], self.covert_bits_str[idx])
+                            packet_timers[idx] = time.time() # Reset the timer
 
     def _send_packet(self, message, cov_bit=None)->int:
         # Send packet using UDP with ACK
