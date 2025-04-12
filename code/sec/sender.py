@@ -125,12 +125,14 @@ class CovertSender:
         if self.verbose: print("[INFO] ACK thread started.")
 
         # Send message packets
-        for i, msg in enumerate(encoded_msg_chunks):
-            print(">> ", i)
+        #for i, msg in enumerate(encoded_msg_chunks):
+        while self.current_bit_idx < len(encoded_msg_chunks):    
+            
             with self.lock: 
                 # Send all the packets within the window
                 while self.current_bit_idx < self.window_start + self.window_size:
-                    msg_str = assign_sequence_number(msg.decode(), i)
+                    msg = encoded_msg_chunks[self.current_bit_idx]
+                    msg_str = assign_sequence_number(msg.decode(), self.current_bit_idx)
                     if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
 
                     if self.current_bit_idx >= self.total_covert_bits:
@@ -143,7 +145,7 @@ class CovertSender:
                     self.current_bit_idx += 1
                 
                 # TODO : Validate ACKs 
-                
+
 
     def _send_packet(self, message, cov_bit=None)->int:
         # Send packet using UDP with ACK
