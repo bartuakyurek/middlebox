@@ -96,11 +96,12 @@ class CovertSender:
             if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
 
             # Save the ACK timestamp with sequence number as key
-            if seq_num not in self.received_acks:
-                self.received_acks[seq_num] = time.time() # TODO: I assumed this could be useful for packet stats, but is it used?
-            else:
-                if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
-            
+            with self.lock: # To avoid race conditions
+                if seq_num not in self.received_acks:
+                    self.received_acks[seq_num] = time.time() # TODO: I assumed this could be useful for packet stats, but is it used?
+                else:
+                    if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
+                
 
     def send(self, message):
         # Sends a legitimate message
