@@ -147,10 +147,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # TODO: Add timeout parameter, overt msg, covert msg
     
-    MAX_UDP_PAYLOAD_SIZE = 80 # 1458 for a typical 1500 MTU Ethernet network
+    MAX_UDP_PAYLOAD_SIZE = 20 # 1458 for a typical 1500 MTU Ethernet network
 
-    carrier_msg = "Hello, this is a long message. " * 50
-    covert_msg = "P" # "a covert message."
+    carrier_msg = "Hello, this is a long message. " * 150
+    covert_msg = "a covert message."
     sender = CovertSender(covert_msg=covert_msg, verbose=True, timeout=5, 
                           MAX_UDP_PAYLOAD_SIZE=MAX_UDP_PAYLOAD_SIZE)
 

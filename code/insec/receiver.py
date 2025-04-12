@@ -65,6 +65,11 @@ class CovertReceiver:
                 return
             print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
             
+            # Extract covert bit and save it
+            covert_bit = '1' if packet[UDP].chksum != 0 else '0' # TODO: is 0 = 0?
+            self.covert_bits[seq_number] = covert_bit
+            print(f"[INFO] Covert bit {covert_bit} saved for sequence number {seq_number}")
+
             # Send acknowledgment
             sender_ip = packet[IP].src
             #print("dst ip:", packet[IP].dst)
