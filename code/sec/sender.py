@@ -77,7 +77,6 @@ class CovertSender:
         # Sends a legitimate message
         # If the given message cannot fit into a single packet
         # it splits up and sends multiple packets
-        # TODO: Send covert bits alongside
             
         if self.verbose: print("[INFO] Socket created successfully.")
 
@@ -141,13 +140,13 @@ if __name__ == '__main__':
     MAX_UDP_PAYLOAD_SIZE = 80 # 1458 for a typical 1500 MTU Ethernet network
 
 
-    overt_msg = "Hello, this is a long message. " * 50
+    carrier_msg = "Hello, this is a long message. " * 50
     covert_msg = "I'm a covert message."
     sender = CovertSender(covert_msg=covert_msg, verbose=True, timeout=5, 
                           MAX_UDP_PAYLOAD_SIZE=MAX_UDP_PAYLOAD_SIZE)
 
     try:
-        sender.send(overt_msg) 
+        sender.send(carrier_msg) 
     except Exception as e:
         print(f"[ERROR] An error occurred: {e}")
     finally:
