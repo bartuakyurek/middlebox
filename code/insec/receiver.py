@@ -34,8 +34,8 @@ class CovertReceiver:
         print("[INFO] Socket closed.")
 
     def get_covert_msg(self):
-        if self.bits:
-            bit_str = ''.join(self.bits[i] for i in sorted(self.bits))
+        if self.covert_bits:
+            bit_str = ''.join(self.covert_bits[i] for i in sorted(self.covert_bits))
             return bits_to_message(bit_str)
         return ""
     
