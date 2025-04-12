@@ -89,7 +89,8 @@ class CovertReceiver:
             sender_ip = packet[IP].src
             #print("dst ip:", packet[IP].dst)
             #print("src ip:", packet[IP].src)
-            sent = self.sock.sendto("ACK".encode(), (sender_ip, self.dest_port))
+            ack = str(seq_number).encode() 
+            sent = self.sock.sendto(ack, (sender_ip, self.dest_port))
             if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
 
     def start_udp_listener(self):

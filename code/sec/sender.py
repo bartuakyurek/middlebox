@@ -90,9 +90,12 @@ class CovertSender:
         # so some packets after the covert bits may be lost
         while self.current_bit_idx < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
-            if self.verbose: print(f"[INFO] ACK ({data}) received from {addr}")
+            seq_num = data.decode()
+            if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
 
             # TODO: save which packet ACK belongs to
+            
+
 
     def send(self, message):
         # Sends a legitimate message
