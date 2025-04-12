@@ -47,7 +47,7 @@ def assign_sequence_number(msg_str, seq_number)->str:
 
 
 class CovertSender:
-    def __init__(self, covert_msg, verbose=False, timeout=5, MAX_UDP_PAYLOAD_SIZE=1458, port=9999, recv_port=8888):        
+    def __init__(self, covert_msg, verbose=False, window_size=5, timeout=5, MAX_UDP_PAYLOAD_SIZE=1458, port=9999, recv_port=8888):        
         self.verbose = verbose
         self.timeout = timeout
         self.max_payload = MAX_UDP_PAYLOAD_SIZE
@@ -57,7 +57,7 @@ class CovertSender:
         self.covert_bits_str = self._convert_to_covert_bits_str(covert_msg, self.HEADER_LEN)
 
         self.total_covert_bits = len(self.covert_bits_str)
-        self.current_bit_idx = 0 
+
         print(f"[INFO] Covert bits string: {self.covert_bits_str}")
         print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
 
@@ -67,6 +67,11 @@ class CovertSender:
         self.received_acks = {} # Store sequence numbers as well as their timestamps
         self.ack_sock = self.create_udp_socket('', self.port) # Socket dedicated to receive ACK
         
+        self.current_bit_idx = 0
+        self.window_start = 0
+        self.window_size = window_size
+        self.lock = threading.Lock()
+
         if verbose: print("[INFO] CovertSender created. Call send() to start sending packets.")
 
     def get_host(self, IP_NAME='INSECURENET_HOST_IP'):
@@ -102,6 +107,9 @@ class CovertSender:
                 else:
                     if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
                 
+                while self.window_start in self.received_acks: 
+                    self.window_start += 1 # Slide the window
+                    if self.verbose: print(f"[SLIDE] Window is slided to {self.window_start}.")
 
     def send(self, message):
         # Sends a legitimate message
@@ -118,17 +126,24 @@ class CovertSender:
 
         # Send message packets
         for i, msg in enumerate(encoded_msg_chunks):
-            msg_str = assign_sequence_number(msg.decode(), i)
-            if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
+            print(">> ", i)
+            with self.lock: 
+                # Send all the packets within the window
+                while self.current_bit_idx < self.window_start + self.window_size:
+                    msg_str = assign_sequence_number(msg.decode(), i)
+                    if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
 
-            if self.current_bit_idx >= self.total_covert_bits:
-                if self.verbose: print("[INFO] All bits have been sent...")
-                bit = None
-            else:                
-                bit = self.covert_bits_str[self.current_bit_idx]
+                    if self.current_bit_idx >= self.total_covert_bits:
+                        if self.verbose: print("[INFO] All bits have been sent...")
+                        bit = None
+                    else:                
+                        bit = self.covert_bits_str[self.current_bit_idx]
 
-            self._send_packet(msg_str, bit)
-            self.current_bit_idx += 1
+                    self._send_packet(msg_str, bit)
+                    self.current_bit_idx += 1
+                
+                # TODO : Validate ACKs 
+                
 
     def _send_packet(self, message, cov_bit=None)->int:
         # Send packet using UDP with ACK
@@ -168,13 +183,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # TODO: Add timeout parameter, overt msg, covert msg
     
+    WINDOW_SIZE = 5
     MAX_UDP_PAYLOAD_SIZE = 20 # 1458 for a typical 1500 MTU Ethernet network
 
     # WARNING: If the length of the carrier message is too short
     # not all the covert bits will be sent. 
     carrier_msg = "Hello, this is a long message. " * 20
     covert_msg =  "cow" #"This is a covert message." 
-    sender = CovertSender(covert_msg=covert_msg, verbose=True, timeout=5, 
+    sender = CovertSender(covert_msg=covert_msg, verbose=True, 
+                          window_size=WINDOW_SIZE, timeout=5, 
                           MAX_UDP_PAYLOAD_SIZE=MAX_UDP_PAYLOAD_SIZE)
 
     try:
