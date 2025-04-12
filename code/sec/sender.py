@@ -149,8 +149,10 @@ if __name__ == '__main__':
     
     MAX_UDP_PAYLOAD_SIZE = 20 # 1458 for a typical 1500 MTU Ethernet network
 
-    carrier_msg = "Hello, this is a long message. " * 15
-    covert_msg = "cow"
+    # WARNING: If the length of the carrier message is too short
+    # not all the covert bits will be sent. 
+    carrier_msg = "Hello, this is a long message. " * 100
+    covert_msg = "This is a covert message." 
     sender = CovertSender(covert_msg=covert_msg, verbose=True, timeout=5, 
                           MAX_UDP_PAYLOAD_SIZE=MAX_UDP_PAYLOAD_SIZE)
 
