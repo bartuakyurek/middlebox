@@ -15,11 +15,12 @@ def bits_to_message(bits: str)->str:
 
 class CovertReceiver:
 
-    def __init__(self, port=8888, dest_port=8888):
+    def __init__(self, port=8888, dest_port=9999):
         self.port = port
         self.dest_port = dest_port
         self.sock = self.create_and_bind_socket(port)
 
+        self.HEADER_LEN = 8 # This must the same with CovertSender's TODO: share this variable across containers
         self.covert_bits = {} # Store in a dictionary because number of bits is unknown
 
     def create_and_bind_socket(self, port):
@@ -40,17 +41,36 @@ class CovertReceiver:
             return bits_to_message(bit_str)
         return ""
     
+    def extract_sequence_number(self, payload)->int:
+        # Sequence number is embedded as '[<seq_number>] '
+        # where <seq_number> is an integer
+        # Returns -1 if not found
+        assert_type(payload, bytes, "payload")
+
+        start = payload.find(b'[')
+        end = payload.find(b']', start)
+        if start != -1 and end != -1:
+            seq_number = payload[start + 1:end]
+            return int(seq_number.decode())
+        
+        return -1
+    
     def packet_callback(self, packet):
         if UDP in packet and Raw in packet:
             # Analyze packet
             payload = bytes(packet[Raw])
-            seq_number = None
-            print(f"Received packet with sequence number {seq_number}: {payload}")
+            seq_number = self.extract_sequence_number(payload)
+            if seq_number == -1:
+                print(f"[WARNING] Invalid packet received: {payload}")
+                return
+            print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
             
             # Send acknowledgment
             sender_ip = packet[IP].src
+            #print("dst ip:", packet[IP].dst)
+            #print("src ip:", packet[IP].src)
             sent = self.sock.sendto("ACK".encode(), (sender_ip, self.dest_port))
-            print(f"Sent {sent} bytes (ACK) back to {sender_ip}")
+            print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
 
     def start_udp_listener(self):
 
@@ -64,7 +84,7 @@ class CovertReceiver:
                 if data:
                     sent = self.sock.sendto(data, addr)
                     print(f"Sent {sent} bytes (ACK) back to {addr}")"""
-        sniff(filter=f"udp and port {self.port}", prn=self.packet_callback, store=False)        
+        sniff(filter=f"udp and dst port {self.port}", prn=self.packet_callback, store=False)        
 
     
 # ------------------------------------------------------------------------------------------------

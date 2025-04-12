@@ -46,7 +46,7 @@ def assign_sequence_number(msg_str, seq_number)->str:
 
 
 class CovertSender:
-    def __init__(self, covert_msg, verbose=False, timeout=5, MAX_UDP_PAYLOAD_SIZE=1458, port=8888, recv_port=8888):        
+    def __init__(self, covert_msg, verbose=False, timeout=5, MAX_UDP_PAYLOAD_SIZE=1458, port=9999, recv_port=8888):        
         self.verbose = verbose
         self.timeout = timeout
         self.max_payload = MAX_UDP_PAYLOAD_SIZE
