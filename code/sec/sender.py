@@ -61,7 +61,7 @@ class CovertSender:
         print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
 
         self.port = 8888
-        self.host_ip = self.get_host()
+        self.recv_ip = self.get_host()
         self.sock = self.create_socket()
         
         if verbose: print("[INFO] CovertSender created. Call send() to start sending packets.")
@@ -73,9 +73,9 @@ class CovertSender:
         return host
     
     def create_socket(self, host_ip=None):
-         if host_ip is None: host_ip = self.host_ip
+         if host_ip is None: host_ip = self.recv_ip
          else: 
-             self.host_ip = host_ip
+             self.recv_ip = host_ip
              print(f"[WARNING] Host IP changed to {host_ip}")
 
          sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP socket
@@ -105,14 +105,14 @@ class CovertSender:
             else:                
                 bit = self.covert_bits_str[self.current_bit_idx]
 
-            udp_status = self._send_packet(msg_str, bit)
+            self._send_packet(msg_str, bit)
             self.current_bit_idx += 1
 
-    def _send_packet(self, message, cov_bit=None, max_resend=100)->int:
+    def _send_packet(self, message, cov_bit=None)->int:
         # Send packet using UDP with ACK
         # Returns 0 if message sent successfully
         # -1 if it cannot be delivered in max_resend trials.
-        ip = IP(dst=self.host_ip)
+        ip = IP(dst=self.recv_ip)
         udp = UDP(dport=self.port, sport=self.port)
         # Covert bit as checksum field existence
         if cov_bit == '1' or cov_bit == None: # None when no covrt bit is sent
@@ -124,30 +124,7 @@ class CovertSender:
         
         pkt = ip/udp/Raw(load=message)
         send(pkt, verbose=False)
-        if self.verbose: print(f"[INFO] Message sent to {self.host_ip}:{self.port}")
-
-        """self.sock.settimeout(self.timeout)
-        trials = 0
-        while True:
-            trials += 1
-            if trials > max_resend: return -1
-            try: # Send the message
-                
-                encoded_msg = message.encode()
-                assert len(encoded_msg) < MAX_UDP_PAYLOAD_SIZE, f"Maximum UDP payload is exceeded ({len(encoded_msg)}>{MAX_UDP_PAYLOAD_SIZE}), the message should be splitted into chunks or increase payload."
-
-                self.sock.sendto(encoded_msg, (self.host_ip, self.port))
-                if self.verbose: print(f"[INFO] Message sent to {self.host_ip}:{self.port}")
-
-                # Wait for acknowledgment
-                response, server = self.sock.recvfrom(4096)
-                if response.decode() == "ACK":
-                    if self.verbose: print("[INFO] Acknowledgment received. Message delivered successfully.")
-                    break
-            except socket.timeout:
-                print("[INFO] Timeout occurred. Resending message...")
-                
-        return 0"""
+        if self.verbose: print(f"[INFO] Message sent to {self.recv_ip}:{self.port}")
             
     def _convert_to_covert_bits_str(self, covert_msg_str, header_len)->str:
         assert_type(covert_msg_str, str, "covert message")
