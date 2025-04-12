@@ -16,6 +16,7 @@ E.g. to send 3 bits of covert message, and fixed header is 8 bits, send: 0000 00
 # ------------------------------------------------------------------------------------------------
 
 import os
+import time
 import socket
 import argparse
 import threading
@@ -63,6 +64,7 @@ class CovertSender:
         self.port = port
         self.recv_port = recv_port
         self.recv_ip = self.get_host()
+        self.received_acks = {} # Store sequence numbers as well as their timestamps
         self.ack_sock = self.create_udp_socket('', self.port) # Socket dedicated to receive ACK
         
         if verbose: print("[INFO] CovertSender created. Call send() to start sending packets.")
@@ -90,12 +92,15 @@ class CovertSender:
         # so some packets after the covert bits may be lost
         while self.current_bit_idx < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
-            seq_num = data.decode()
+            seq_num = int(data.decode())
             if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
 
-            # TODO: save which packet ACK belongs to
+            # Save the ACK timestamp with sequence number as key
+            if seq_num not in self.received_acks:
+                self.received_acks[seq_num] = time.time() # TODO: I assumed this could be useful for packet stats, but is it used?
+            else:
+                if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
             
-
 
     def send(self, message):
         # Sends a legitimate message
