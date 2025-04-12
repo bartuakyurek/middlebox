@@ -63,7 +63,7 @@ class CovertSender:
         self.port = port
         self.recv_port = recv_port
         self.recv_ip = self.get_host()
-        self.ack_sock = self.create_udp_socket(self.recv_ip) # Socket dedicated to receive ACK
+        self.ack_sock = self.create_udp_socket('', self.port) # Socket dedicated to receive ACK
         
         if verbose: print("[INFO] CovertSender created. Call send() to start sending packets.")
 
@@ -73,13 +73,10 @@ class CovertSender:
             raise ValueError("SECURENET_HOST_IP environment variable is not set.")
         return host
     
-    def create_udp_socket(self, host_ip):
-         if host_ip is None: host_ip = self.recv_ip
-         else: 
-             self.recv_ip = host_ip
-             print(f"[WARNING] Host IP changed to {host_ip}")
-
+    def create_udp_socket(self, ip, port):
+         
          sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP socket
+         sock.bind((ip, port))
          if self.verbose: print("[INFO] Socket created successfully.")
          return sock
     
