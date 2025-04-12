@@ -18,6 +18,8 @@ E.g. to send 3 bits of covert message, and fixed header is 8 bits, send: 0000 00
 import os
 import socket
 import argparse
+import threading
+from scapy.all import IP, UDP, Raw, send
 
 # Define the maximum allowed packet size (adjust based on your network MTU)
 
@@ -52,8 +54,12 @@ class CovertSender:
 
         self.HEADER_LEN = 8       
         self.covert_bits_str = self._convert_to_covert_bits_str(covert_msg, self.HEADER_LEN)
+
+        self.total_covert_bits = len(self.covert_bits_str)
+        self.current_bit_idx = 0 
         print(f"[INFO] Covert bits string: {self.covert_bits_str}")
-        
+        print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
+
         self.port = 8888
         self.host_ip = self.get_host()
         self.sock = self.create_socket()
@@ -93,13 +99,34 @@ class CovertSender:
             msg_str = assign_sequence_number(msg.decode(), i)
             if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
 
-            udp_status = self._send_packet(msg_str)
+            if self.current_bit_idx >= self.total_covert_bits:
+                if self.verbose: print("[INFO] All bits have been sent...")
+                bit = None
+            else:                
+                bit = self.covert_bits_str[self.current_bit_idx]
 
-    def _send_packet(self, message, max_resend=100)->int:
+            udp_status = self._send_packet(msg_str, bit)
+            self.current_bit_idx += 1
+
+    def _send_packet(self, message, cov_bit=None, max_resend=100)->int:
         # Send packet using UDP with ACK
         # Returns 0 if message sent successfully
         # -1 if it cannot be delivered in max_resend trials.
-        self.sock.settimeout(self.timeout)
+        ip = IP(dst=self.host_ip)
+        udp = UDP(dport=self.port, sport=self.port)
+        # Covert bit as checksum field existence
+        if cov_bit == '1' or cov_bit == None: # None when no covrt bit is sent
+            udp.chksum = None  # Let OS/scapy compute it
+        elif cov_bit == '0':
+            udp.chksum = 0  # Explicitly remove checksum
+        else:
+            raise ValueError(f"Invalid covert bit. Must be '0' or '1'. Got: {cov_bit}")
+        
+        pkt = ip/udp/Raw(load=message)
+        send(pkt, verbose=False)
+        if self.verbose: print(f"[INFO] Message sent to {self.host_ip}:{self.port}")
+
+        """self.sock.settimeout(self.timeout)
         trials = 0
         while True:
             trials += 1
@@ -120,7 +147,7 @@ class CovertSender:
             except socket.timeout:
                 print("[INFO] Timeout occurred. Resending message...")
                 
-        return 0
+        return 0"""
             
     def _convert_to_covert_bits_str(self, covert_msg_str, header_len)->str:
         assert_type(covert_msg_str, str, "covert message")
@@ -141,11 +168,11 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     # TODO: Add timeout parameter, overt msg, covert msg
+    
     MAX_UDP_PAYLOAD_SIZE = 80 # 1458 for a typical 1500 MTU Ethernet network
 
-
     carrier_msg = "Hello, this is a long message. " * 50
-    covert_msg = "I'm a covert message."
+    covert_msg = "P" # "a covert message."
     sender = CovertSender(covert_msg=covert_msg, verbose=True, timeout=5, 
                           MAX_UDP_PAYLOAD_SIZE=MAX_UDP_PAYLOAD_SIZE)
 
