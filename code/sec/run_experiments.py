@@ -12,7 +12,12 @@ whether or not the receiver fully got the message, rather it relies
 on its mechanism to ensure the packets are sent correctly.
 """
 import copy
-from sender import run_sender, get_args
+import numpy as np
+import scipy.stats as st
+import matplotlib.pyplot as plt
+
+
+from sender import run_sender, get_args, assert_type # TODO: move assert to utils
 
 # Test for a small message for now
 CARRIER_MESSAGE = "Hello, this is a test message. " * 100
@@ -72,6 +77,34 @@ def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 
     out_dict['fixed_args'] = fixed_args
     return out_dict
 
+def plot_statistics(output_dict, arg_name, metric_name):
+    # Plot the statistics
+    # Parameters:
+    # ---------------------------------------------------------------
+    # See change_one_arg_and_run for output_dict variable.
+    # output_dict['stats']: the statistics to plot
+    # output_dict['fixed_args']: the fixed arguments of the experiment
+    # arg_name: name of the free parameter in the experiment
+    # --------------------------------------------------------------
+    stats = output_dict['stats'] # stats dictionary
+    print("Statistics: ", stats)
+    assert_type(stats, dict, "stats")
+    assert_type(arg_name, str, "arg_name")
+    assert_type(metric_name, str, "metric_name")
+
+    x_values = list(stats.keys())
+    y_values = [stats[x][metric_name] for x in x_values]
+    
+    plt.plot(x_values, y_values, 
+             color='blue', linestyle='-', 
+             marker='o', markerfacecolor='red', markeredgecolor='red')
+    plt.xlabel(arg_name)
+    plt.ylabel(f'{metric_name}')
+    plt.title(f'{metric_name} vs {arg_name}')
+    figure_path = f'./{arg_name}_vs_{metric_name}.png'
+    plt.savefig(figure_path)
+    print(f"Saved figure to {figure_path}")
+
 def run_experiments(args):
     
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
@@ -81,6 +114,12 @@ def run_experiments(args):
     t_stats = change_one_arg_and_run(args, 'timeout', timeout_values)
     r_stats = change_one_arg_and_run(args, 'max_retrans', max_allowed_retransmissions)
     
+    available_metrics = w_stats['stats'][1].keys() # WARNING Assumes same keys used in other stats as well 
+    for metric_name in available_metrics:
+        plot_statistics(w_stats, 'window_size', metric_name)
+        plot_statistics(t_stats, 'timeout', metric_name)
+        plot_statistics(r_stats, 'max_retrans', metric_name)
+
     print("Window size statistics: ", w_stats)
     print("Timeout statistics: ", t_stats)
     print("Max retransmissions statistics: ", r_stats)
