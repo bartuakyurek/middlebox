@@ -61,7 +61,7 @@ class CovertSender:
 
         self.total_covert_bits = len(self.covert_bits_str)
 
-        print(f"[INFO] Covert bits string: {self.covert_bits_str}")
+        if verbose: print(f"[INFO] Covert bits string: {self.covert_bits_str}")
         print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
 
         self.port = port
