@@ -123,16 +123,19 @@ class CovertSender:
             return 0
         
         capacity = n_success / n_total
-        if self.verbose: print(f"[INFO] Capacity: {capacity:.2%} ({n_success}/{n_total})")
+        if self.verbose: 
+            print(f"[INFO] Capacity: {capacity:.2%} ({n_success}/{n_total})")
+            print(f"[WARNING] This capacity assumes the packet wasn't delivered if ACK wasn't received within the timeout but in fact, \
+                  ACK may come later than the timeout, so the capacity may be higher than this value. Check the receiver's covert message to verify.")
+
         return capacity
 
 
-    def get_ACK(self):
+    def get_ACK(self, sleep_time=0.1):
         # Listen for ACKs until all the covert bits are sent
         # timeout in seconds.
         # WARNING: This assumes the rest of the message is not ACKed
         # so some packets after the covert bits may be lost
-
 
         while self.cur_pkt_idx < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
@@ -150,6 +153,7 @@ class CovertSender:
                     self.window_start += 1 # Slide the window
                     if self.verbose: print(f"[SLIDE] Window is slided to {self.window_start}.")
 
+                time.sleep(sleep_time) # Sleep to avoid busy waiting
 
     def send(self, message):
         # Sends a legitimate message
