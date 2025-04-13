@@ -29,7 +29,7 @@ def run_and_retrieve_statistics(args)-> dict:
     sender = run_sender(args) 
     stats = {}
     stats['capacity'] = sender.get_capacity() 
-    #rint("TODO: Add more statistics here...")
+    
     return stats
 
 def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 'overt', 'covert']):
@@ -84,17 +84,6 @@ def run_experiments(args):
     print("Window size statistics: ", w_stats)
     print("Timeout statistics: ", t_stats)
     print("Max retransmissions statistics: ", r_stats)
-    # Choose the parameters to test
-    # Set the args with the chosen parameters
-    #w_stats = {}
-    #w_stats['timeout'] = args.timeout
-    #w_stats['max_retrans'] = args.max_retrans
-    #for i, w_size in enumerate(window_sizes):
-    #    print(f"\n>> Running experiment {i+1}/{len(window_sizes)}with window size: {w_size}")
-    #    args.window_size = w_size
-    #    stat = run_and_retrieve_statistics(args)
-    #    w_stats[w_size] = stat
-    #print("Window size capacity statistics: ", w_stats)
 
 if __name__ == "__main__":
     
