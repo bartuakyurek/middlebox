@@ -70,6 +70,7 @@ class CovertSender:
         self.received_acks = {} # Store sequence numbers as well as their timestamps
         self.ack_sock = self.create_udp_socket('', self.port) # Socket dedicated to receive ACK
         
+        self.ack_thread = None
         self.total_packets_sent = 0 # WARNING: Assumes packets are sent only until all covert bits are sent
         self.cur_pkt_idx = 0
         self.window_start = 0
@@ -92,6 +93,8 @@ class CovertSender:
          return sock
     
     def shutdown(self):
+        if self.ack_thread is not None:
+            self.ack_thread.join() # Wait for the ACK thread to finish
         self.ack_sock.close()
 
     def count_successful_transmissions(self):
@@ -170,8 +173,8 @@ class CovertSender:
         msg_str_list = [assign_sequence_number(chunk.decode(), i) for i, chunk in enumerate(encoded_msg_chunks)]
         
         # Create a daemon to receive ACKs continuously
-        ack_thread = threading.Thread(target=self.get_ACK, daemon=True)
-        ack_thread.start()
+        self.ack_thread = threading.Thread(target=self.get_ACK, daemon=True)
+        self.ack_thread.start()
         if self.verbose: print("[INFO] ACK thread started.")
 
         # Send message packets
@@ -288,7 +291,6 @@ def run_sender(args, **kwargs)->CovertSender:
     except Exception as e:
         print(f"[ERROR] An error occurred: {e}")
     finally:
-        time.sleep(1) # Sleep to let the last ACKs to be received
         sender.shutdown()
         print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
     
@@ -300,7 +302,7 @@ def get_args():
     default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "C" #"This is a covert message."
     default_window_size = 1
-    default_udp_payload = 120 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
+    default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     
     default_max_transmissions = 5
     default_timeout = 2   # seconds
