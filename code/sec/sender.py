@@ -96,6 +96,7 @@ class CovertSender:
 
     def count_successful_transmissions(self):
         # Count the number of successful transmissions
+        # print("Received ACKs: ", self.received_acks)
         num_success = 0
         for _, timestamp in self.received_acks.items():
             if timestamp != -1:
@@ -125,8 +126,8 @@ class CovertSender:
         capacity = n_success / n_total
         if self.verbose: 
             print(f"[INFO] Capacity: {capacity:.2%} ({n_success}/{n_total})")
-            print(f"[WARNING] This capacity assumes the packet wasn't delivered if ACK wasn't received within the timeout but in fact, \
-                  ACK may come later than the timeout, so the capacity may be higher than this value. Check the receiver's covert message to verify.")
+            print(f"[WARNING] This capacity assumes the packet wasn't delivered if ACK wasn't received within the timeout but in fact,\n \
+                    ACK may come later than the timeout, so the capacity may be higher than this value. Check the receiver's covert message to verify.")
 
         return capacity
 
@@ -136,7 +137,9 @@ class CovertSender:
         # WARNING: This assumes the rest of the message is not ACKed
         # so some packets after the covert bits may be lost
 
-        while self.cur_pkt_idx < self.total_covert_bits:
+        #while self.cur_pkt_idx < self.total_covert_bits:
+        # Wait until every packet is either ACKed or marked as dropped
+        while len(self.received_acks) < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
             seq_num = int(data.decode())
             
@@ -145,9 +148,9 @@ class CovertSender:
                 if seq_num not in self.received_acks:
                     if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
                     self.received_acks[seq_num] = time.time() # TODO: I assumed this could be useful for packet stats, but is it used?
-                else:
-                    if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
-                
+                #else:
+                #    if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
+
                 while self.window_start in self.received_acks: 
                     self.window_start += 1 # Slide the window
                     if self.verbose: print(f"[SLIDE] Window is slided to {self.window_start}.")
@@ -196,6 +199,8 @@ class CovertSender:
                     packet_timers[self.cur_pkt_idx] = time.time()
                     packet_transmissions[self.cur_pkt_idx] = 1 # Initialize transmission count
                     self.cur_pkt_idx += 1
+                    if self.verbose: print("Total packets sent: ", self.total_packets_sent, " total received ACKs:",
+                                           len(self.received_acks) )
                 
                 # Timeout checks
                 for idx in range(self.window_start, self.cur_pkt_idx):
@@ -283,6 +288,7 @@ def run_sender(args, **kwargs)->CovertSender:
     except Exception as e:
         print(f"[ERROR] An error occurred: {e}")
     finally:
+        time.sleep(1) # Sleep to let the last ACKs to be received
         sender.shutdown()
         print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
     
@@ -291,10 +297,10 @@ def run_sender(args, **kwargs)->CovertSender:
 def get_args():
     # Create a parser and set default values
     #  return the parsed arguments
-    default_carrier_msg = "Hello, this is a long message. " * 90 # WARNING : Carrier must be much longer than covert message for now.
-    default_covert_msg =  "This is a covert message."
+    default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
+    default_covert_msg =  "C" #"This is a covert message."
     default_window_size = 5
-    default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
+    default_udp_payload = 120 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     
     default_max_transmissions = 3
     default_timeout = 2   # seconds
