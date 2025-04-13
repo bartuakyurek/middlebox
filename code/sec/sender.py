@@ -245,6 +245,28 @@ class CovertSender:
         msg_bits_string = message_to_bits(covert_bytes)
         return covert_len_bits_str_padded + msg_bits_string
 
+
+def run_sender(args):
+    # Send a covert message
+    # WARNING: If the length of the carrier message is too short
+    # not all the covert bits will be sent. 
+    carrier_msg = args.overt
+    covert_msg =  args.covert
+    sender = CovertSender(covert_msg=covert_msg, verbose=args.verbose, 
+                          window_size=args.window, timeout=args.timeout, 
+                          max_udp_payload=args.udpsize, max_retrans=args.retrans)
+
+    try:
+        print("[INFO] Sending message... This might take a while.")
+        sender.send(carrier_msg) 
+    except Exception as e:
+        print(f"[ERROR] An error occurred: {e}")
+    finally:
+        sender.shutdown()
+        print("Sender capacity: ", sender.get_capacity())
+        print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
+    
+    
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -269,20 +291,4 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--udpsize", help=f"maximum UDP payload size, default {default_udp_payload}. use small value to send more covert bits.", type=int, default=default_udp_payload, required=False) 
     args = parser.parse_args()
     
-    # WARNING: If the length of the carrier message is too short
-    # not all the covert bits will be sent. 
-    carrier_msg = args.overt
-    covert_msg =  args.covert
-    sender = CovertSender(covert_msg=covert_msg, verbose=args.verbose, 
-                          window_size=args.window, timeout=args.timeout, 
-                          max_udp_payload=args.udpsize, max_retrans=args.retrans)
-
-    try:
-        print("[INFO] Sending message... This might take a while.")
-        sender.send(carrier_msg) 
-    except Exception as e:
-        print(f"[ERROR] An error occurred: {e}")
-    finally:
-        sender.shutdown()
-        print("Sender capacity: ", sender.get_capacity())
-        print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
+    run_sender(args)
