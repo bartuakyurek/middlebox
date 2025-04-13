@@ -99,10 +99,15 @@ class CovertReceiver:
 # ------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    
-    receiver = CovertReceiver(port=8888, dest_port=9999, verbose=True)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
+    args = parser.parse_args()
+
+    receiver = CovertReceiver(port=8888, dest_port=9999, verbose=args.verbose)
     
     try:
+        print("Receiver started. Press Ctrl+C to stop.")
         receiver.start_udp_listener()
     except KeyboardInterrupt:
         print("Receiver stopped.")
