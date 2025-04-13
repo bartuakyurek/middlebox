@@ -139,11 +139,11 @@ class CovertSender:
         while self.cur_pkt_idx < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
             seq_num = int(data.decode())
-            if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
-
+            
             # Save the ACK timestamp with sequence number as key
             with self.lock: # To avoid race conditions
                 if seq_num not in self.received_acks:
+                    if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
                     self.received_acks[seq_num] = time.time() # TODO: I assumed this could be useful for packet stats, but is it used?
                 else:
                     if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
