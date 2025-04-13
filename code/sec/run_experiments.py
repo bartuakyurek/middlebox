@@ -194,8 +194,8 @@ def run_experiments(args):
     # -------------------------------------------------------------
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
-    run_single_param_experiment(args, 'window', window_sizes, num_trials)
-    #run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
+    #run_single_param_experiment(args, 'window', window_sizes, num_trials)
+    run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
     #run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
 
 if __name__ == "__main__":
