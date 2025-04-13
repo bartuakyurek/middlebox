@@ -206,7 +206,7 @@ class CovertSender:
                             if packet_transmissions[idx] > self.max_retrans:
                                 print(f"[TIMEOUT] Maximum retransmission limit reached for packet {idx}. Dropping it.")
                                 assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
-                                self.received_acks[idx] = -1 # Mark it as missing TODO: What do we do with this?
+                                self.received_acks[idx] = -1 # Mark it as missing 
                                 if self.window_start == idx: self.window_start += 1 # Slide the window
                             else:
                                 if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
