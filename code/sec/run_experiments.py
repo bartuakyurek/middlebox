@@ -20,12 +20,12 @@ import matplotlib.pyplot as plt
 from sender import run_sender, get_args, assert_type # TODO: move assert to utils
 
 # Test for a small message for now
-CARRIER_MESSAGE = "Hello, this is a test message. " * 100
-COVERT_MESSAGE = "COW" * 3
+CARRIER_MESSAGE = "Hello, this is a test message. " * 500
+COVERT_MESSAGE = "C" * 1
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
-timeout_values = [1.0, 5.0, 10.]
+timeout_values = [0.1, 0.2, 1.0, 5.0]
 max_allowed_transmissions = [1, 2, 3, 4, 5] 
 
 def get_confidence_interval(values, confidence=0.95)-> tuple:
@@ -40,11 +40,12 @@ def get_confidence_interval(values, confidence=0.95)-> tuple:
 
 def run_and_retrieve_statistics(args, num_trials)-> dict:
     # Run sender fully then retrieve statistics    
-    sender = run_sender(args) 
+    
     stats = {}
     stats['capacity'] = []
     
     for i in range(num_trials):
+        sender = run_sender(args) 
         cap = sender.get_capacity() 
         stats['capacity'].append(cap)
         print(f"[INFO] Trial {i+1}/{num_trials} - Capacity: {cap}")
@@ -129,7 +130,7 @@ def plot_statistics(output_dict, arg_name, metric_name):
     # Plot the shaded confidence interval
     ci = np.array(yerr)
     x, y = np.array(x), np.array(y)
-    plt.fill_between(x, y - ci, y + ci, color='blue', alpha=0.2, label='± CI')
+    plt.fill_between(x, y - ci, y + ci, color='blue', alpha=0.2, label=f'± CI {len(ci)} trials')
 
     plt.xlabel(arg_name)
     plt.ylabel(f'{metric_name}')
@@ -168,13 +169,13 @@ def extract_metric_from_dict(stats_dict, metric_name)->tuple:
 
     return metric_values, sorted_keys
 
-def run_experiments(args):
+def run_experiments(args, num_trials):
     
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
 
     #w_stats = change_one_arg_and_run(args, 'window_size', window_sizes)
-    t_stats = change_one_arg_and_run(args, 'timeout', timeout_values)
+    t_stats = change_one_arg_and_run(args, 'timeout', timeout_values, num_trials=num_trials)
     #r_stats = change_one_arg_and_run(args, 'max_trans', max_allowed_transmissions)
     
     available_metrics = t_stats['stats'][1].keys() # WARNING Assumes same keys used in other stats as well 

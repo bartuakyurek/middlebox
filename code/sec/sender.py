@@ -299,10 +299,10 @@ def get_args():
     #  return the parsed arguments
     default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "C" #"This is a covert message."
-    default_window_size = 5
+    default_window_size = 1
     default_udp_payload = 120 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     
-    default_max_transmissions = 3
+    default_max_transmissions = 5
     default_timeout = 2   # seconds
 
     parser = argparse.ArgumentParser()
@@ -325,4 +325,4 @@ if __name__ == '__main__':
 
     args = get_args()
     sender = run_sender(args)
-    print("Covert Channel capacity: ", sender.get_capacity())
+    print("Covert Channel capacity: ", sender.get_capacity() , " bits per packet.")
