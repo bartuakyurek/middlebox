@@ -246,7 +246,7 @@ if __name__ == '__main__':
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     
     default_max_retransmissions = 3
-    default_timeout = 10.2   # seconds
+    default_timeout = 2   # seconds
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
