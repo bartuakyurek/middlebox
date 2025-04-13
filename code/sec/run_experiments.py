@@ -16,27 +16,23 @@ from sender import run_sender, get_args
 
 # Test for a small message for now
 CARRIER_MESSAGE = "Hello, this is a test message. " * 100
-COVERT_MESSAGE = "COWOW"
+COVERT_MESSAGE = "Covert." * 3
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
 timeout_values = [0.01, 0.1, 0.2, 0.5, 1.0]
 max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit, but it's confusing with this name, make the naming consistent
 
-def run_capacity_test(sender):
-    print(">>> Running capacity test...")
-    print(">> Sender capacity: ", sender.get_capacity())
-    return
-
 
 def run_and_retrieve_statistics(args)-> dict:
     # Run sender fully then retrieve statistics
-
-    stats = {}
+    
+    print("\n>> Running sender...")
     sender = run_sender(args) 
-
+    
+    stats = {}
     stats['capacity'] = sender.get_capacity()
-    print(">> Sender capacity: ", stats['capacity'])
+
     
     #rint("TODO: Add more statistics here...")
     return stats
@@ -44,9 +40,9 @@ def run_and_retrieve_statistics(args)-> dict:
 def run_experiments(args):
     
     default_args = args
-
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
+
     # Choose the parameters to test
     # Set the args with the chosen parameters
     w_stats = {}
