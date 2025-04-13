@@ -305,7 +305,7 @@ def get_args():
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     
     default_max_transmissions = 5
-    default_timeout = 2   # seconds
+    default_timeout = 5   # seconds
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)

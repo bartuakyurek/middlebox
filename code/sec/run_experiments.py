@@ -54,7 +54,8 @@ def run_and_retrieve_statistics(args, num_trials)-> dict:
     #capacity = sender.get_capacity()
     #return capacity
 
-def change_one_arg_and_run(args, arg_name, arg_values, num_trials, exclude_args=['verbose', 'overt', 'covert', 'udpsize']):
+def change_one_arg_and_run(args, arg_name, arg_values, num_trials, 
+                           exclude_args=['verbose', 'overt', 'covert', 'udpsize']):
     # Change one argument and run the sender
     # Parameters:
     # ------------------------------------------------------------
@@ -84,7 +85,7 @@ def change_one_arg_and_run(args, arg_name, arg_values, num_trials, exclude_args=
         
     fixed_args = {}
     for name in args_copy.__dict__:
-        if name != arg_name and name not in exclude_args:
+        if str(name) != str(arg_name) and (name not in exclude_args):
             fixed_args[name] = args_copy.__dict__[name]
 
     out_dict = {}
@@ -130,8 +131,8 @@ def plot_statistics(output_dict, arg_name, metric_name):
     x, y = np.array(x), np.array(y)
     plt.fill_between(x, y - ci, y + ci, color='blue', alpha=0.2, label=f'± CI ({len(measurements)} trials)')
 
-    plt.xlabel(f'{arg_name} ({get_metric_units(arg_name)})')
-    plt.ylabel(f'{metric_name} ({get_metric_units(metric_name)})')
+    plt.xlabel(f'{arg_name}') # ({get_metric_units(arg_name)})')
+    plt.ylabel(f'{metric_name}') # ({get_metric_units(metric_name)})')
     plt.title(f'{metric_name} vs {arg_name}')
     plt.grid(True)
     plt.legend()
@@ -180,7 +181,7 @@ def run_experiments(args):
 
     # Parameters of experimental campaign
     # ------------------------------------------------------------
-    num_trials=4 # Number of runs for each identical configuration
+    num_trials=1 # Number of runs for each identical configuration
 
     # Test for a small message for now (WARNING: Set carrier length at least x16 more than covert message)
     CARRIER_MESSAGE = "Hello, this is a test message. " * 500
@@ -193,9 +194,9 @@ def run_experiments(args):
     # -------------------------------------------------------------
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
-    #run_single_param_experiment(args, 'window_size', window_sizes, num_trials)
+    run_single_param_experiment(args, 'window', window_sizes, num_trials)
     #run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
-    run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
+    #run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
 
 if __name__ == "__main__":
     
