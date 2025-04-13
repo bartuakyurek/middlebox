@@ -25,9 +25,7 @@ max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit,
 
 
 def run_and_retrieve_statistics(args)-> dict:
-    # Run sender fully then retrieve statistics
-    
-    print("\n>> Running sender...")
+    # Run sender fully then retrieve statistics    
     sender = run_sender(args) 
     
     stats = {}
@@ -46,7 +44,8 @@ def run_experiments(args):
     # Choose the parameters to test
     # Set the args with the chosen parameters
     w_stats = {}
-    for w_size in window_sizes:
+    for i, w_size in enumerate(window_sizes):
+        print(f"\n>> Running experiment {i+1}/{len(window_sizes)}with window size: {w_size}")
         args.window_size = w_size
         stat = run_and_retrieve_statistics(args)
         w_stats[w_size] = stat
