@@ -108,9 +108,6 @@ def plot_statistics(output_dict, arg_name, metric_name):
     assert_type(arg_name, str, "arg_name")
     assert_type(metric_name, str, "metric_name")
 
-    #x_values = list(stats_dict.keys())
-    #y_values = [stats_dict[x][metric_name] for x in x_values]
-
     # Extract the metric values from the statistics dictionary
     # and sort them according to the x_values
     measurements_list, x = extract_metric_from_dict(stats_dict, metric_name)
@@ -175,7 +172,7 @@ def run_single_param_experiment(args, arg_name, arg_values, num_trials):
     
     available_metrics = arg_stats['stats'][1].keys() # WARNING Assumes same keys used in other stats as well 
     for metric_name in available_metrics:
-        plot_statistics(arg_stats, 'timeout', metric_name)
+        plot_statistics(arg_stats, arg_name, metric_name)
 
     print(f"{arg_name} statistics: ", arg_stats)
 
@@ -197,8 +194,8 @@ def run_experiments(args):
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
     #run_single_param_experiment(args, 'window_size', window_sizes, num_trials)
-    run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
-    #run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
+    #run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
+    run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
 
 if __name__ == "__main__":
     
