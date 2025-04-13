@@ -70,6 +70,7 @@ class CovertSender:
         self.received_acks = {} # Store sequence numbers as well as their timestamps
         self.ack_sock = self.create_udp_socket('', self.port) # Socket dedicated to receive ACK
         
+        self.total_packets_sent = 0 # WARNING: Assumes packets are sent only until all covert bits are sent
         self.cur_pkt_idx = 0
         self.window_start = 0
         self.window_size = window_size
@@ -116,7 +117,7 @@ class CovertSender:
         # IMPORTANT WARNING: This function assumes that the receiver
         # is not sending any ACKs for the packets after the covert bits
         n_success = self.count_successful_transmissions()
-        n_total = self.cur_pkt_idx
+        n_total = self.total_packets_sent #self.cur_pkt_idx
         if n_total == 0:
             print("[WARNING] No packets sent yet. The capacity is returned 0.")
             return 0
@@ -183,6 +184,7 @@ class CovertSender:
                         bit = self.covert_bits_str[self.cur_pkt_idx]
    
                     self._send_packet(msg_str, bit)
+                    self.total_packets_sent += 1
                     packet_timers[self.cur_pkt_idx] = time.time()
                     packet_transmissions[self.cur_pkt_idx] = 1 # Initialize transmission count
                     self.cur_pkt_idx += 1
@@ -191,14 +193,15 @@ class CovertSender:
                 for idx in range(self.window_start, self.cur_pkt_idx):
                     if idx not in self.received_acks:
                         if time.time() - packet_timers[idx] > self.timeout:
-                            if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
                             
                             if packet_transmissions[idx] > self.max_retrans:
                                 print(f"[TIMEOUT] Maximum retransmission limit reached for packet {idx}. Dropping it.")
                                 assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
                                 self.received_acks[idx] = -1 # Mark it as missing TODO: What do we do with this?
                             else:
+                                if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
                                 self._send_packet(msg_str_list[idx], self.covert_bits_str[idx])
+                                self.total_packets_sent += 1
                                 packet_timers[idx] = time.time() # Reset the timer
                                 packet_transmissions[idx] += 1 # Increment transmission count
                             
