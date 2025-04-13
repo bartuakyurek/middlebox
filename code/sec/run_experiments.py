@@ -19,6 +19,15 @@ import matplotlib.pyplot as plt
 
 from sender import run_sender, get_args, assert_type # TODO: move assert to utils
 
+def get_metric_units(metric_name):
+    if metric_name == 'capacity':
+        return 'bits/packet'
+    elif metric_name == 'RTT':
+        return 'ms'
+    elif metric_name == 'timeout':
+        return 'sec'
+    else:
+        return ''
 
 def get_confidence_interval(values, confidence=0.95)-> tuple:
     # Compute confidence interval given a list of values
@@ -124,8 +133,8 @@ def plot_statistics(output_dict, arg_name, metric_name):
     x, y = np.array(x), np.array(y)
     plt.fill_between(x, y - ci, y + ci, color='blue', alpha=0.2, label=f'± CI ({len(ci)} trials)')
 
-    plt.xlabel(arg_name)
-    plt.ylabel(f'{metric_name}')
+    plt.xlabel(f'{arg_name} ({get_metric_units(arg_name)})')
+    plt.ylabel(f'{metric_name} ({get_metric_units(metric_name)})')
     plt.title(f'{metric_name} vs {arg_name}')
     plt.grid(True)
     plt.legend()
@@ -174,22 +183,22 @@ def run_experiments(args):
 
     # Parameters of experimental campaign
     # ------------------------------------------------------------
-    num_trials=10 # Number of runs for each identical configuration
+    num_trials=3 # Number of runs for each identical configuration
 
     # Test for a small message for now (WARNING: Set carrier length at least x16 more than covert message)
     CARRIER_MESSAGE = "Hello, this is a test message. " * 500
-    COVERT_MESSAGE = "C" * 10
+    COVERT_MESSAGE = "Cov" * 1
 
     # Parameters to test
     window_sizes = [1, 2, 4, 8]
-    timeout_values = [0.1, 0.2, 1.0, 5.0]
+    timeout_values = [0.01, 0.2, 1.0, 5.0]
     max_allowed_transmissions = [1, 2, 3, 4, 5] 
     # -------------------------------------------------------------
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
-    run_single_param_experiment(args, 'window_size', window_sizes, num_trials)
+    #run_single_param_experiment(args, 'window_size', window_sizes, num_trials)
     run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
-    run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
+    #run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
 
 if __name__ == "__main__":
     
