@@ -47,10 +47,13 @@ def assign_sequence_number(msg_str, seq_number)->str:
 
 
 class CovertSender:
-    def __init__(self, covert_msg, verbose=False, window_size=5, timeout=5, MAX_UDP_PAYLOAD_SIZE=1458, port=9999, recv_port=8888):        
+    def __init__(self, covert_msg, verbose=False, 
+                 window_size=5, timeout=5, max_udp_payload=1458, max_retrans=3,
+                 port=9999, recv_port=8888):        
         self.verbose = verbose
         self.timeout = timeout
-        self.max_payload = MAX_UDP_PAYLOAD_SIZE
+        self.max_payload = max_udp_payload
+        self.max_retrans = max_retrans
         self.covert_msg = covert_msg
 
         self.HEADER_LEN = 8       
@@ -131,6 +134,7 @@ class CovertSender:
         # WARNING: This assumes the rest of the message after all the
         # covert bits are sent, can be dropped. (See get_ACK() Warning)
         packet_timers = {}
+        packet_transmissions = {}
         while self.cur_pkt_idx < self.total_covert_bits: #len(encoded_msg_chunks):    
             if self.verbose: print("Current bit index:", self.cur_pkt_idx, " / total packets ", len(encoded_msg_chunks))
             with self.lock: 
@@ -145,8 +149,12 @@ class CovertSender:
                     else:                
                         bit = self.covert_bits_str[self.cur_pkt_idx]
 
-                    self._send_packet(msg_str, bit)
+                    if self.cur_pkt_idx % 5 == 0: # !!!!!!!!!!!!!!!!! Remove - this is just for testing timeout
+                        print("DO NOT SEND....")
+                    else:           
+                        self._send_packet(msg_str, bit)
                     packet_timers[self.cur_pkt_idx] = time.time()
+                    packet_transmissions[self.cur_pkt_idx] = 1 # Initialize transmission count
                     self.cur_pkt_idx += 1
                 
                 # Timeout checks
@@ -155,9 +163,15 @@ class CovertSender:
                         if time.time() - packet_timers[idx] > self.timeout:
                             if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
                             
-                            self._send_packet(msg_str_list[idx], self.covert_bits_str[idx])
-                            packet_timers[idx] = time.time() # Reset the timer
-
+                            if packet_transmissions[idx] > self.max_retrans:
+                                print(f"[TIMEOUT] Maximum retransmission limit reached for packet {idx}. Dropping it.")
+                                assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
+                                self.received_acks[idx] = -1 # Mark it as missing TODO: What do we do with this?
+                            else:
+                                self._send_packet(msg_str_list[idx], self.covert_bits_str[idx])
+                                packet_timers[idx] = time.time() # Reset the timer
+                                packet_transmissions[idx] += 1 # Increment transmission count
+                            
     def _send_packet(self, message, cov_bit=None):
         # Send packet using UDP with ACK
         # Returns 0 if message sent successfully
@@ -197,11 +211,13 @@ if __name__ == '__main__':
     default_covert_msg = "This is a covert message."
     default_window_size = 5
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
+    default_max_retransmissions = 3
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
     parser.add_argument("-c", "--covert", help="covert message to be sent", type=str, default=default_covert_msg, required=False)
     parser.add_argument("-o", "--overt", help="carrier message to be sent", type=str, default=default_carrier_msg, required=False)
+    parser.add_argument("-r", "--retrans", help=f"maximum number of retransmissions, default {default_max_retransmissions}", type=int, default=default_max_retransmissions, required=False)
 
     parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
     parser.add_argument("-s", "--udpsize", help=f"maximum UDP payload size, default {default_udp_payload}. use small value to send more covert bits.", type=int, default=default_udp_payload, required=False) 
@@ -213,7 +229,7 @@ if __name__ == '__main__':
     covert_msg =  args.covert
     sender = CovertSender(covert_msg=covert_msg, verbose=args.verbose, 
                           window_size=args.window, timeout=5, 
-                          MAX_UDP_PAYLOAD_SIZE=args.udpsize)
+                          max_udp_payload=args.udpsize, max_retrans=args.retrans)
 
     try:
         print("[INFO] Sending message... This might take a while.")
