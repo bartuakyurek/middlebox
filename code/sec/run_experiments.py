@@ -181,21 +181,21 @@ def run_experiments(args):
 
     # Parameters of experimental campaign
     # ------------------------------------------------------------
-    num_trials=1 # Number of runs for each identical configuration
+    num_trials=4 # Number of runs for each identical configuration
 
     # Test for a small message for now (WARNING: Set carrier length at least x16 more than covert message)
     CARRIER_MESSAGE = "Hello, this is a test message. " * 500
     COVERT_MESSAGE = "Cov" * 1
 
     # Parameters to test
-    window_sizes = [1, 2, 4, 8]
+    window_sizes = [1, 2, 4, 8, 16, 32]
     timeout_values = [0.01, 0.2, 1.0, 5.0]
     max_allowed_transmissions = [1, 2, 3, 4, 5] 
     # -------------------------------------------------------------
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
-    #run_single_param_experiment(args, 'window', window_sizes, num_trials)
-    run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
+    run_single_param_experiment(args, 'window', window_sizes, num_trials)
+    #run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
     #run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
 
 if __name__ == "__main__":
