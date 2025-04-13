@@ -93,6 +93,38 @@ class CovertSender:
     def shutdown(self):
         self.ack_sock.close()
 
+    def count_successful_transmissions(self):
+        # Count the number of successful transmissions
+        num_success = 0
+        for _, timestamp in self.received_acks.items():
+            if timestamp != -1:
+                num_success += 1
+        return num_success
+    
+    def get_capacity(self):
+        # Calculate the capacity of the channel by number of bits 
+        # sent successfully over the total number of packets sent
+        
+        # WARNING: Since each packet carries 1 bit of covert message
+        # in this design, the maximum capacity is 1 bit per packet.
+        # With that being said, the capacity is calculated by 
+        # counting number of successful transmissions assuming
+        # each successful transmission carries 1 bit of covert message.
+        # If it wasn't this design choice, one could carry more bits
+        # per packet, then this capacity function would be obselete.
+
+        # IMPORTANT WARNING: This function assumes that the receiver
+        # is not sending any ACKs for the packets after the covert bits
+        n_success = self.count_successful_transmissions()
+        n_total = self.cur_pkt_idx
+        if n_total == 0:
+            print("[WARNING] No packets sent yet. The capacity is returned 0.")
+            return 0
+        
+        capacity = n_success / n_total
+        if self.verbose: print(f"[INFO] Capacity: {capacity:.2%} ({n_success}/{n_total})")
+        return capacity
+
 
     def get_ACK(self):
         # Listen for ACKs until all the covert bits are sent
@@ -209,12 +241,12 @@ class CovertSender:
 if __name__ == '__main__':
 
     default_carrier_msg = "Hello, this is a long message. " * 90 # WARNING : Carrier must be much longer than covert message for now.
-    default_covert_msg =  "This is a covert message."
+    default_covert_msg =  "COW" # This is a covert message."
     default_window_size = 5
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     
     default_max_retransmissions = 3
-    default_timeout = 0.2   # seconds
+    default_timeout = 10.2   # seconds
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
@@ -243,4 +275,5 @@ if __name__ == '__main__':
         print(f"[ERROR] An error occurred: {e}")
     finally:
         sender.shutdown()
+        print("Sender capacity: ", sender.get_capacity())
         print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
