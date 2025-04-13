@@ -155,7 +155,7 @@ class CovertSender:
                             self._send_packet(encoded_msg_chunks[idx], self.covert_bits_str[idx])
                             packet_timers[idx] = time.time() # Reset the timer
 
-    def _send_packet(self, message, cov_bit=None)->int:
+    def _send_packet(self, message, cov_bit=None):
         # Send packet using UDP with ACK
         # Returns 0 if message sent successfully
         # -1 if it cannot be delivered in max_resend trials.
