@@ -20,7 +20,7 @@ COVERT_MESSAGE = "COW" * 1
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
-timeout_values = [0.01, 0.1, 0.2, 0.5, 1.0]
+timeout_values = [0.1, 0.2, 0.5, 1.0]
 max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit, but it's confusing with this name, make the naming consistent
 
 
@@ -47,24 +47,30 @@ def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 
     #        from sender import get_args
     #        args = get_args() # This has argument window_size
     #        window_sizes = [1, 2, 4, 8]
-    #        change_one_arg_and_run(args, 'window_size', window_sizes)
+    #        out_dict = change_one_arg_and_run(args, 'window_size', window_sizes)
+    #        print("Window size statistics: ", out_dict['stats'])
+    #        print("Window size fixed arguments: ", out_dict['fixed_args'])
     args_copy = copy.deepcopy(args)
     stats = {}
     for arg_value in arg_values:
         setattr(args_copy, arg_name, arg_value)
-        print(f"[####] Running with {arg_name} = {arg_value}")
+        print(f"[....] Running with {arg_name} = {arg_value}")
         stat = run_and_retrieve_statistics(args_copy)
 
         stats[arg_value] = stat
 
     print(f"Statistics for {arg_name}: ", stats)
     print("Where fixed arguments are:")
+    fixed_args = {}
     for name in args_copy.__dict__:
         if name != arg_name and name not in exclude_args:
             print(f"{name}: {args_copy.__dict__[name]}")
-            stats[name] = args_copy.__dict__[name]
+            fixed_args[name] = args_copy.__dict__[name]
 
-    return stats
+    out_dict = {}
+    out_dict['stats'] = stats
+    out_dict['fixed_args'] = fixed_args
+    return out_dict
 
 def run_experiments(args):
     
