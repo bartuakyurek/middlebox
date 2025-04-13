@@ -16,7 +16,7 @@ from sender import run_sender, get_args
 
 # Test for a small message for now
 CARRIER_MESSAGE = "Hello, this is a test message. " * 100
-COVERT_MESSAGE = "Covert." * 1
+COVERT_MESSAGE = "COW" * 1
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
@@ -62,13 +62,22 @@ def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 
     for name in args_copy.__dict__:
         if name != arg_name and name not in exclude_args:
             print(f"{name}: {args_copy.__dict__[name]}")
+            stats[name] = args_copy.__dict__[name]
+
+    return stats
 
 def run_experiments(args):
     
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
 
-    change_one_arg_and_run(args, 'window_size', window_sizes)
+    w_stats = change_one_arg_and_run(args, 'window_size', window_sizes)
+    t_stats = change_one_arg_and_run(args, 'timeout', timeout_values)
+    r_stats = change_one_arg_and_run(args, 'max_retrans', max_allowed_retransmissions)
+    
+    print("Window size statistics: ", w_stats)
+    print("Timeout statistics: ", t_stats)
+    print("Max retransmissions statistics: ", r_stats)
     # Choose the parameters to test
     # Set the args with the chosen parameters
     #w_stats = {}
