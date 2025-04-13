@@ -133,7 +133,6 @@ class CovertSender:
         # WARNING: This assumes the rest of the message is not ACKed
         # so some packets after the covert bits may be lost
 
-        
 
         while self.cur_pkt_idx < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
@@ -175,10 +174,11 @@ class CovertSender:
         packet_timers = {}
         packet_transmissions = {}
         while self.cur_pkt_idx < self.total_covert_bits: #len(encoded_msg_chunks):    
-            if self.verbose: print("Current bit index:", self.cur_pkt_idx, " / total packets ", len(encoded_msg_chunks))
             with self.lock: 
                 # Send all the packets within the window
                 while self.cur_pkt_idx < self.window_start + self.window_size:
+                    if self.verbose: print("Current bit index:", self.cur_pkt_idx, " / total packets ", len(encoded_msg_chunks)) # TODO: Misleading, total packets are not relevant right now because they won't be sent after the covert bits are fully sent
+
                     msg_str = msg_str_list[self.cur_pkt_idx]
                     if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
 
