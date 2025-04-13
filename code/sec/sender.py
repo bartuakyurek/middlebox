@@ -130,7 +130,6 @@ class CovertSender:
 
         return capacity
 
-
     def get_ACK(self, sleep_time=0.1):
         # Listen for ACKs until all the covert bits are sent
         # timeout in seconds.
@@ -251,7 +250,7 @@ class CovertSender:
 if __name__ == '__main__':
 
     default_carrier_msg = "Hello, this is a long message. " * 90 # WARNING : Carrier must be much longer than covert message for now.
-    default_covert_msg =  "COW" # This is a covert message."
+    default_covert_msg =  "This is a covert message."
     default_window_size = 5
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     
@@ -263,7 +262,7 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--covert", help="covert message to be sent", type=str, default=default_covert_msg, required=False)
     parser.add_argument("-o", "--overt", help="carrier message to be sent", type=str, default=default_carrier_msg, required=False)
     
-    parser.add_argument("-r", "--retrans", help=f"maximum number of retransmissions, default {default_max_retransmissions}", type=int, default=default_max_retransmissions, required=False)
+    parser.add_argument("-r", "--retrans", help=f"maximum number of retransmissions, 1 to send packets only once, default {default_max_retransmissions}", type=int, default=default_max_retransmissions, required=False)
     parser.add_argument("-t", "--timeout", help=f"timeout in seconds, default {default_timeout}", type=float, default=default_timeout, required=False)
 
     parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
