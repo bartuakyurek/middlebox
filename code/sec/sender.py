@@ -129,7 +129,7 @@ class CovertSender:
         # covert bits are sent, can be dropped. (See get_ACK() Warning)
         packet_timers = {}
         while self.cur_pkt_idx < self.total_covert_bits: #len(encoded_msg_chunks):    
-            print("Current bit index:", self.cur_pkt_idx, " ", len(encoded_msg_chunks))
+            if self.verbose: print("Current bit index:", self.cur_pkt_idx, " / total packets ", len(encoded_msg_chunks))
             with self.lock: 
                 # Send all the packets within the window
                 while self.cur_pkt_idx < self.window_start + self.window_size:
@@ -190,23 +190,33 @@ class CovertSender:
 # ------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    # TODO: Add timeout parameter, overt msg, covert msg
-    
-    WINDOW_SIZE = 5
-    MAX_UDP_PAYLOAD_SIZE = 20 # 1458 for a typical 1500 MTU Ethernet network
+    default_carrier_msg = "Hello, this is a long message. " * 120
+    default_covert_msg = "This is a covert message."
+    default_window_size = 5
+    default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
+    parser.add_argument("-c", "--covert", help="covert message to be sent", type=str, default=default_covert_msg, required=False)
+    parser.add_argument("-o", "--overt", help="carrier message to be sent", type=str, default=default_carrier_msg, required=False)
+
+    parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
+    parser.add_argument("-s", "--udpsize", help=f"maximum UDP payload size, default {default_udp_payload}. use small value to send more covert bits.", type=int, default=default_udp_payload, required=False) 
+    args = parser.parse_args()
+    
     # WARNING: If the length of the carrier message is too short
     # not all the covert bits will be sent. 
-    carrier_msg = "Hello, this is a long message. " * 20
-    covert_msg =  "cow" #"This is a covert message." 
-    sender = CovertSender(covert_msg=covert_msg, verbose=True, 
-                          window_size=WINDOW_SIZE, timeout=5, 
-                          MAX_UDP_PAYLOAD_SIZE=MAX_UDP_PAYLOAD_SIZE)
+    carrier_msg = args.overt
+    covert_msg =  args.covert
+    sender = CovertSender(covert_msg=covert_msg, verbose=args.verbose, 
+                          window_size=args.window, timeout=5, 
+                          MAX_UDP_PAYLOAD_SIZE=args.udpsize)
 
     try:
+        print("[INFO] Sending message... This might take a while.")
         sender.send(carrier_msg) 
     except Exception as e:
         print(f"[ERROR] An error occurred: {e}")
     finally:
         sender.shutdown()
+        print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
