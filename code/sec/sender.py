@@ -129,8 +129,12 @@ class CovertSender:
 
     def get_ACK(self):
         # Listen for ACKs until all the covert bits are sent
+        # timeout in seconds.
         # WARNING: This assumes the rest of the message is not ACKed
         # so some packets after the covert bits may be lost
+
+        
+
         while self.cur_pkt_idx < self.total_covert_bits:
             data, addr = self.ack_sock.recvfrom(4096)
             seq_num = int(data.decode())
@@ -146,6 +150,7 @@ class CovertSender:
                 while self.window_start in self.received_acks: 
                     self.window_start += 1 # Slide the window
                     if self.verbose: print(f"[SLIDE] Window is slided to {self.window_start}.")
+
 
     def send(self, message):
         # Sends a legitimate message
@@ -198,6 +203,7 @@ class CovertSender:
                                 print(f"[TIMEOUT] Maximum retransmission limit reached for packet {idx}. Dropping it.")
                                 assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
                                 self.received_acks[idx] = -1 # Mark it as missing TODO: What do we do with this?
+                                if self.window_start == idx: self.window_start += 1 # Slide the window
                             else:
                                 if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
                                 self._send_packet(msg_str_list[idx], self.covert_bits_str[idx])
