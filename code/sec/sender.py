@@ -318,4 +318,5 @@ def get_args():
 if __name__ == '__main__':
 
     args = get_args()
-    run_sender(args)
+    sender = run_sender(args)
+    print("Covert Channel capacity: ", sender.get_capacity())

@@ -20,12 +20,12 @@ import matplotlib.pyplot as plt
 from sender import run_sender, get_args, assert_type # TODO: move assert to utils
 
 # Test for a small message for now
-CARRIER_MESSAGE = "Hello, this is a test message. " * 1000
-COVERT_MESSAGE = "COW" * 10
+CARRIER_MESSAGE = "Hello, this is a test message. " * 100
+COVERT_MESSAGE = "COW" * 3
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
-timeout_values = [0.5, 1.0, 5.0, 10.]
+timeout_values = [1.0, 5.0, 10.]
 max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit, but it's confusing with this name, make the naming consistent
 
 def get_confidence_interval(values, confidence=0.95)-> tuple:
@@ -80,12 +80,9 @@ def change_one_arg_and_run(args, arg_name, arg_values, num_trials=5, exclude_arg
         stats_of_single_parameter = run_and_retrieve_statistics(args_copy, num_trials)
         stats[arg_value] = stats_of_single_parameter
         
-    print(f"Statistics for {arg_name}: ", stats)
-    print("Where fixed arguments are:")
     fixed_args = {}
     for name in args_copy.__dict__:
         if name != arg_name and name not in exclude_args:
-            print(f"{name}: {args_copy.__dict__[name]}")
             fixed_args[name] = args_copy.__dict__[name]
 
     out_dict = {}
