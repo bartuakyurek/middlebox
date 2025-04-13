@@ -170,7 +170,9 @@ def run_single_param_experiment(args, arg_name, arg_values, num_trials):
 
     print(f"{arg_name} statistics: ", arg_stats)
 
-def run_experiments(args, num_trials=10):
+def run_experiments(args):
+
+    num_trials=10 # Number of trials to run for each identical configuration
 
     # Test for a small message for now
     CARRIER_MESSAGE = "Hello, this is a test message. " * 500
