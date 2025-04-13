@@ -25,7 +25,7 @@ COVERT_MESSAGE = "COW" * 1
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
-timeout_values = [0.1, 0.2, 0.5, 1.0]
+timeout_values = [0.1, 0.5, 1.0, 5.0]
 max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit, but it's confusing with this name, make the naming consistent
 
 
@@ -37,7 +37,7 @@ def run_and_retrieve_statistics(args)-> dict:
     
     return stats
 
-def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 'overt', 'covert']):
+def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 'overt', 'covert', 'udpsize']):
     # Change one argument and run the sender
     # Parameters:
     # ------------------------------------------------------------
@@ -86,21 +86,27 @@ def plot_statistics(output_dict, arg_name, metric_name):
     # output_dict['fixed_args']: the fixed arguments of the experiment
     # arg_name: name of the free parameter in the experiment
     # --------------------------------------------------------------
-    stats = output_dict['stats'] # stats dictionary
-    print("Statistics: ", stats)
-    assert_type(stats, dict, "stats")
+    stats_dict = output_dict['stats'] 
+    fixed_args_dict = output_dict['fixed_args']
+    print("Statistics: ", stats_dict)
+    assert_type(stats_dict, dict, "stats")
     assert_type(arg_name, str, "arg_name")
     assert_type(metric_name, str, "metric_name")
 
-    x_values = list(stats.keys())
-    y_values = [stats[x][metric_name] for x in x_values]
-    
-    plt.plot(x_values, y_values, 
+    x_values = list(stats_dict.keys())
+    y_values = [stats_dict[x][metric_name] for x in x_values]
+    label = ', '.join(f'{k}={v}' for k, v in fixed_args_dict.items())
+
+    plt.figure()
+    plt.plot(x_values, y_values, label=label,
              color='blue', linestyle='-', 
              marker='o', markerfacecolor='red', markeredgecolor='red')
     plt.xlabel(arg_name)
     plt.ylabel(f'{metric_name}')
     plt.title(f'{metric_name} vs {arg_name}')
+    plt.grid(True)
+    plt.legend()
+
     figure_path = f'./{arg_name}_vs_{metric_name}.png'
     plt.savefig(figure_path)
     print(f"Saved figure to {figure_path}")
