@@ -211,7 +211,7 @@ class CovertSender:
                         if time.time() - packet_timers[idx] > self.timeout:
                             
                             if packet_transmissions[idx] > self.max_trans:
-                                print(f"[TIMEOUT] Maximum transmission limit reached for packet {idx}. Dropping it.")
+                                if self.verbose: print(f"[TIMEOUT] Maximum transmission limit reached for packet {idx}. Dropping it.")
                                 assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
                                 self.received_acks[idx] = -1 # Mark it as missing 
                                 if self.window_start == idx: self.window_start += 1 # Slide the window
