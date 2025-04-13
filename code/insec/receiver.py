@@ -67,8 +67,7 @@ class CovertReceiver:
         if start != -1 and end != -1:
             seq_number = payload[start + 1:end]
             return int(seq_number.decode())
-        
-        return -1 # TODO: This is never used, consider using or removing it
+        return -1 
     
     def packet_callback(self, packet):
         if UDP in packet and Raw in packet:
