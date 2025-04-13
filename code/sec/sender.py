@@ -181,10 +181,7 @@ class CovertSender:
                         bit = None
                     else:                
                         bit = self.covert_bits_str[self.cur_pkt_idx]
-
-                    #if self.cur_pkt_idx % 50 == 0: # TODO: Remove - this is just for testing timeout
-                    #    print("DO NOT SEND....")
-                    #else:           
+   
                     self._send_packet(msg_str, bit)
                     packet_timers[self.cur_pkt_idx] = time.time()
                     packet_transmissions[self.cur_pkt_idx] = 1 # Initialize transmission count
