@@ -152,7 +152,7 @@ class CovertSender:
                     self.window_start += 1 # Slide the window
                     if self.verbose: print(f"[SLIDE] Window is slided to {self.window_start}.")
 
-                time.sleep(sleep_time) # Sleep to avoid busy waiting
+            time.sleep(sleep_time) # Sleep to let the other threads acquire the lock more easily
 
     def send(self, message):
         # Sends a legitimate message
