@@ -42,7 +42,7 @@ def split_message_into_chunks(encoded_message, chunk_size)->list:
 
 def assign_sequence_number(msg_str, seq_number)->str:
     assert_type(msg_str, str, "message")
-    msg_with_sequence = "[" + str(seq_number) + "]" + " " + msg_str
+    msg_with_sequence = "[" + str(seq_number) + "]" + msg_str
     return msg_with_sequence
 
 

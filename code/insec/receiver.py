@@ -87,8 +87,6 @@ class CovertReceiver:
 
             # Send acknowledgment
             sender_ip = packet[IP].src
-            #print("dst ip:", packet[IP].dst)
-            #print("src ip:", packet[IP].src)
             ack = str(seq_number).encode() 
             sent = self.sock.sendto(ack, (sender_ip, self.dest_port))
             if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
@@ -113,4 +111,4 @@ if __name__ == "__main__":
         print(f"An error occurred: {e}")
     finally:
         receiver.shutdown()
-        print("\nCovert message:", receiver.get_covert_msg())
+        print(f"\nCovert message: {receiver.get_covert_msg()}")
