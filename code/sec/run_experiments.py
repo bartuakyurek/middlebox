@@ -20,15 +20,15 @@ import matplotlib.pyplot as plt
 from sender import run_sender, get_args, assert_type # TODO: move assert to utils
 
 # Test for a small message for now
-CARRIER_MESSAGE = "Hello, this is a test message. " * 100
-COVERT_MESSAGE = "COW" * 5
+CARRIER_MESSAGE = "Hello, this is a test message. " * 1000
+COVERT_MESSAGE = "COW" * 10
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
-timeout_values = [0.1, 0.5, 1.0, 5.0]
+timeout_values = [0.5, 1.0, 5.0, 10.]
 max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit, but it's confusing with this name, make the naming consistent
 
-def get_confidence_interval(values, confidence=0.95):
+def get_confidence_interval(values, confidence=0.95)-> tuple:
     # Compute confidence interval given a list of values
     # where values correspond the different measurements
     # retrieved by running experiments with the same configuration.
@@ -38,15 +38,21 @@ def get_confidence_interval(values, confidence=0.95):
     margin = stderr * scipy.stats.t.ppf((1 + confidence) / 2., len(a) - 1)
     return mean, margin
 
-def run_and_retrieve_statistics(args)-> dict:
+def run_and_retrieve_statistics(args, num_trials)-> dict:
     # Run sender fully then retrieve statistics    
     sender = run_sender(args) 
     stats = {}
-    stats['capacity'] = sender.get_capacity() 
+    stats['capacity'] = []
     
+    for i in range(num_trials):
+        cap = sender.get_capacity() 
+        stats['capacity'].append(cap)
+        print(f"[INFO] Trial {i+1}/{num_trials} - Capacity: {cap}")
     return stats
+    #capacity = sender.get_capacity()
+    #return capacity
 
-def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 'overt', 'covert', 'udpsize']):
+def change_one_arg_and_run(args, arg_name, arg_values, num_trials=5, exclude_args=['verbose', 'overt', 'covert', 'udpsize']):
     # Change one argument and run the sender
     # Parameters:
     # ------------------------------------------------------------
@@ -64,15 +70,16 @@ def change_one_arg_and_run(args, arg_name, arg_values, exclude_args=['verbose', 
     #        out_dict = change_one_arg_and_run(args, 'window_size', window_sizes)
     #        print("Window size statistics: ", out_dict['stats'])
     #        print("Window size fixed arguments: ", out_dict['fixed_args'])
-    args_copy = copy.deepcopy(args)
+    # ------------------------------------------------------------
+
+    args_copy = copy.deepcopy(args) 
     stats = {}
     for arg_value in arg_values:
         setattr(args_copy, arg_name, arg_value)
         print(f"[....] Running with {arg_name} = {arg_value}")
-        stat = run_and_retrieve_statistics(args_copy)
-
-        stats[arg_value] = stat
-
+        stats_of_single_parameter = run_and_retrieve_statistics(args_copy, num_trials)
+        stats[arg_value] = stats_of_single_parameter
+        
     print(f"Statistics for {arg_name}: ", stats)
     print("Where fixed arguments are:")
     fixed_args = {}
@@ -102,14 +109,31 @@ def plot_statistics(output_dict, arg_name, metric_name):
     assert_type(arg_name, str, "arg_name")
     assert_type(metric_name, str, "metric_name")
 
-    x_values = list(stats_dict.keys())
-    y_values = [stats_dict[x][metric_name] for x in x_values]
+    #x_values = list(stats_dict.keys())
+    #y_values = [stats_dict[x][metric_name] for x in x_values]
+
+    # Extract the metric values from the statistics dictionary
+    # and sort them according to the x_values
+    measurements_list, x = extract_metric_from_dict(stats_dict, metric_name)
+    y, yerr = [], []
+    for measurements in measurements_list:
+        assert_type(measurements, list, "measurements")
+        mean_y, margin_y = get_confidence_interval(measurements)
+        y.append(mean_y)
+        yerr.append(margin_y)
+    
     label = ', '.join(f'{k}={v}' for k, v in fixed_args_dict.items())
 
     plt.figure()
-    plt.plot(x_values, y_values, label=label,
+    plt.plot(x, y, label=label,
              color='blue', linestyle='-', 
              marker='o', markerfacecolor='red', markeredgecolor='red')
+    
+    # Plot the shaded confidence interval
+    ci = np.array(yerr)
+    x, y = np.array(x), np.array(y)
+    plt.fill_between(x, y - ci, y + ci, color='blue', alpha=0.2, label='± CI')
+
     plt.xlabel(arg_name)
     plt.ylabel(f'{metric_name}')
     plt.title(f'{metric_name} vs {arg_name}')
@@ -152,25 +176,19 @@ def run_experiments(args):
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
 
-    w_stats = change_one_arg_and_run(args, 'window_size', window_sizes)
-
-
-    print("Capacity statistics for window sizes: \n",
-          extract_metric_from_dict(w_stats['stats'], 'capacity'))
-    return
-
+    #w_stats = change_one_arg_and_run(args, 'window_size', window_sizes)
     t_stats = change_one_arg_and_run(args, 'timeout', timeout_values)
-    r_stats = change_one_arg_and_run(args, 'max_retrans', max_allowed_retransmissions)
+    #r_stats = change_one_arg_and_run(args, 'max_retrans', max_allowed_retransmissions)
     
-    available_metrics = w_stats['stats'][1].keys() # WARNING Assumes same keys used in other stats as well 
+    available_metrics = t_stats['stats'][1].keys() # WARNING Assumes same keys used in other stats as well 
     for metric_name in available_metrics:
-        plot_statistics(w_stats, 'window_size', metric_name)
+        #plot_statistics(w_stats, 'window_size', metric_name)
         plot_statistics(t_stats, 'timeout', metric_name)
-        plot_statistics(r_stats, 'max_retrans', metric_name)
+        #plot_statistics(r_stats, 'max_retrans', metric_name)
 
-    print("Window size statistics: ", w_stats)
+    #print("Window size statistics: ", w_stats)
     print("Timeout statistics: ", t_stats)
-    print("Max retransmissions statistics: ", r_stats)
+    #print("Max retransmissions statistics: ", r_stats)
 
 if __name__ == "__main__":
     
