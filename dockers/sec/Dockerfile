@@ -8,6 +8,6 @@ RUN echo 'net.ipv4.ip_forward=0' >> /etc/sysctl.conf && sysctl -p
 RUN apt update && apt install -y python3 python3-pip build-essential cmake libpcap-dev  vim  
 
 # Install Python packages (avoid externally managed system error)
-RUN pip3 install --break-system-packages scapy
+RUN pip3 install --break-system-packages scapy numpy scipy matplotlib
 
 WORKDIR /code/sec
