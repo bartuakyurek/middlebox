@@ -26,7 +26,7 @@ COVERT_MESSAGE = "COW" * 3
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
 timeout_values = [1.0, 5.0, 10.]
-max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit, but it's confusing with this name, make the naming consistent
+max_allowed_transmissions = [1, 2, 3, 4, 5] 
 
 def get_confidence_interval(values, confidence=0.95)-> tuple:
     # Compute confidence interval given a list of values
@@ -175,17 +175,17 @@ def run_experiments(args):
 
     #w_stats = change_one_arg_and_run(args, 'window_size', window_sizes)
     t_stats = change_one_arg_and_run(args, 'timeout', timeout_values)
-    #r_stats = change_one_arg_and_run(args, 'max_retrans', max_allowed_retransmissions)
+    #r_stats = change_one_arg_and_run(args, 'max_trans', max_allowed_transmissions)
     
     available_metrics = t_stats['stats'][1].keys() # WARNING Assumes same keys used in other stats as well 
     for metric_name in available_metrics:
         #plot_statistics(w_stats, 'window_size', metric_name)
         plot_statistics(t_stats, 'timeout', metric_name)
-        #plot_statistics(r_stats, 'max_retrans', metric_name)
+        #plot_statistics(r_stats, 'max_trans', metric_name)
 
     #print("Window size statistics: ", w_stats)
     print("Timeout statistics: ", t_stats)
-    #print("Max retransmissions statistics: ", r_stats)
+    #print("Max transmissions statistics: ", r_stats)
 
 if __name__ == "__main__":
     
