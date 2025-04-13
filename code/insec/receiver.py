@@ -107,7 +107,7 @@ if __name__ == "__main__":
     receiver = CovertReceiver(port=8888, dest_port=9999, verbose=args.verbose)
     
     try:
-        print("Receiver started. Press Ctrl+C to stop.")
+        print("Receiver started. Press Ctrl+C to stop and see the received covert message.")
         receiver.start_udp_listener()
     except KeyboardInterrupt:
         print("Receiver stopped.")

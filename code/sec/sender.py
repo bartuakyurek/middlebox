@@ -120,7 +120,7 @@ class CovertSender:
         # it splits up and sends multiple packets
         encoded_msg = message.encode() 
         encoded_msg_chunks = split_message_into_chunks(encoded_msg, self.max_payload-8) # -8 is to be able to add sequence number in the beginning 
-        print(f"[INFO] Message is splitted into {len(encoded_msg_chunks)} chunks.")
+        print(f"[INFO] Message is splitted into {len(encoded_msg_chunks)} packets.")
         assert len(encoded_msg_chunks) >= self.total_covert_bits, f"[ERROR] Number of packets are not enough for the number of covert bits {len(encoded_msg_chunks)} < {self.total_covert_bits}, please increase the carrier message length."
 
         # Add sequence number to each chunk
