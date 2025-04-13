@@ -128,7 +128,7 @@ def plot_statistics(output_dict, arg_name, metric_name):
     # Plot the shaded confidence interval
     ci = np.array(yerr)
     x, y = np.array(x), np.array(y)
-    plt.fill_between(x, y - ci, y + ci, color='blue', alpha=0.2, label=f'± CI ({len(ci)} trials)')
+    plt.fill_between(x, y - ci, y + ci, color='blue', alpha=0.2, label=f'± CI ({len(measurements)} trials)')
 
     plt.xlabel(f'{arg_name} ({get_metric_units(arg_name)})')
     plt.ylabel(f'{metric_name} ({get_metric_units(metric_name)})')
@@ -180,7 +180,7 @@ def run_experiments(args):
 
     # Parameters of experimental campaign
     # ------------------------------------------------------------
-    num_trials=3 # Number of runs for each identical configuration
+    num_trials=4 # Number of runs for each identical configuration
 
     # Test for a small message for now (WARNING: Set carrier length at least x16 more than covert message)
     CARRIER_MESSAGE = "Hello, this is a test message. " * 500
