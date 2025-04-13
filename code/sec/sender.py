@@ -246,15 +246,36 @@ class CovertSender:
         return covert_len_bits_str_padded + msg_bits_string
 
 
-def run_sender(args):
-    # Send a covert message
+def run_sender(args, **kwargs)->CovertSender:
+    # Create a CovertSender object and send the covert message
+    # 
+    # See get_args() to configure default arguments
+    # and pass optional arguments as kwargs.
+    # 
+    # Required arguments:
+    #     overt : set the carrier message
+    #     covert : set the covert message
+    # Optional arguments:
+    #     verbose : print intermediate steps
+    #     timeout : timeout in seconds
+    #     window_size : sliding window size
+    #     udpsize : maximum UDP payload size
+    #     retrans : maximum number of retransmissions
+
     # WARNING: If the length of the carrier message is too short
     # not all the covert bits will be sent. 
     carrier_msg = args.overt
     covert_msg =  args.covert
-    sender = CovertSender(covert_msg=covert_msg, verbose=args.verbose, 
-                          window_size=args.window, timeout=args.timeout, 
-                          max_udp_payload=args.udpsize, max_retrans=args.retrans)
+
+    verbose = kwargs.get('verbose', args.verbose)
+    timeout = kwargs.get('timeout', args.timeout)
+    window = kwargs.get('window_size', args.window)
+    udpsize = kwargs.get('max_udp_payload', args.udpsize)
+    retrans = kwargs.get('max_retransmissions', args.retrans)
+
+    sender = CovertSender(covert_msg=covert_msg, verbose=verbose, 
+                          window_size=window, timeout=timeout, 
+                          max_udp_payload=udpsize, max_retrans=retrans)
 
     try:
         print("[INFO] Sending message... This might take a while.")
@@ -263,14 +284,13 @@ def run_sender(args):
         print(f"[ERROR] An error occurred: {e}")
     finally:
         sender.shutdown()
-        print("Sender capacity: ", sender.get_capacity())
         print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
     
-    
-# ------------------------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------------------
-if __name__ == '__main__':
+    return sender
 
+def get_args():
+    # Create a parser and set default values
+    #  return the parsed arguments
     default_carrier_msg = "Hello, this is a long message. " * 90 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "This is a covert message."
     default_window_size = 5
@@ -289,6 +309,13 @@ if __name__ == '__main__':
 
     parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
     parser.add_argument("-s", "--udpsize", help=f"maximum UDP payload size, default {default_udp_payload}. use small value to send more covert bits.", type=int, default=default_udp_payload, required=False) 
-    args = parser.parse_args()
     
+    args = parser.parse_args()
+    return args
+
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+if __name__ == '__main__':
+
+    args = get_args()
     run_sender(args)
