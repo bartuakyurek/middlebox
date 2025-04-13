@@ -13,7 +13,7 @@ on its mechanism to ensure the packets are sent correctly.
 """
 import copy
 import numpy as np
-import scipy.stats as st
+import scipy
 import matplotlib.pyplot as plt
 
 
@@ -21,13 +21,22 @@ from sender import run_sender, get_args, assert_type # TODO: move assert to util
 
 # Test for a small message for now
 CARRIER_MESSAGE = "Hello, this is a test message. " * 100
-COVERT_MESSAGE = "COW" * 1
+COVERT_MESSAGE = "COW" * 5
 
 # Parameters to test
 window_sizes = [1, 2, 4, 8]
 timeout_values = [0.1, 0.5, 1.0, 5.0]
 max_allowed_retransmissions = [1, 2, 3, 4, 5] # TODO: 1 means do not retransmit, but it's confusing with this name, make the naming consistent
 
+def get_confidence_interval(values, confidence=0.95):
+    # Compute confidence interval given a list of values
+    # where values correspond the different measurements
+    # retrieved by running experiments with the same configuration.
+    a = np.array(values)
+    mean = np.mean(a)
+    stderr = scipy.stats.sem(a)  # Standard error of the mean
+    margin = stderr * scipy.stats.t.ppf((1 + confidence) / 2., len(a) - 1)
+    return mean, margin
 
 def run_and_retrieve_statistics(args)-> dict:
     # Run sender fully then retrieve statistics    
@@ -111,12 +120,45 @@ def plot_statistics(output_dict, arg_name, metric_name):
     plt.savefig(figure_path)
     print(f"Saved figure to {figure_path}")
 
+def extract_metric_from_dict(stats_dict, metric_name)->tuple:
+    # Extract the metric from the statistics dictionary
+    # Parameters:
+    # ---------------------------------------------------------------
+    # stats_dict: the statistics dictionary from output_dict['stats']
+    # which holds the statistics for each value of the free parameter
+    #
+    # metric_name: the name of the metric to extract, e.g. 'capacity'
+    # --------------------------------------------------------------
+    # Returns tuple of lists:
+    # metric_values: extracted metrics
+    # sorted_keys: values of the parameter with the same order as metric_values
+    # --------------------------------------------------------------
+    assert_type(stats_dict, dict, "stats_dict")
+    assert_type(metric_name, str, "metric_name")
+
+    metric_values = []
+    sorted_keys = sorted(stats_dict.keys())
+    for key in sorted_keys:
+        metric_value = stats_dict[key].get(metric_name)
+        if metric_value is not None:
+            metric_values.append(metric_value)
+        else:
+            raise ValueError(f"Metric {metric_name} not found for key {key}.")
+
+    return metric_values, sorted_keys
+
 def run_experiments(args):
     
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
 
     w_stats = change_one_arg_and_run(args, 'window_size', window_sizes)
+
+
+    print("Capacity statistics for window sizes: \n",
+          extract_metric_from_dict(w_stats['stats'], 'capacity'))
+    return
+
     t_stats = change_one_arg_and_run(args, 'timeout', timeout_values)
     r_stats = change_one_arg_and_run(args, 'max_retrans', max_allowed_retransmissions)
     
