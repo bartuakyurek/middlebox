@@ -254,7 +254,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--overt", help="carrier message to be sent", type=str, default=default_carrier_msg, required=False)
     
     parser.add_argument("-r", "--retrans", help=f"maximum number of retransmissions, default {default_max_retransmissions}", type=int, default=default_max_retransmissions, required=False)
-    parser.add_argument("-t", "--timeout", help=f"timeout in seconds, default {default_timeout}", type=int, default=default_timeout, required=False)
+    parser.add_argument("-t", "--timeout", help=f"timeout in seconds, default {default_timeout}", type=float, default=default_timeout, required=False)
 
     parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
     parser.add_argument("-s", "--udpsize", help=f"maximum UDP payload size, default {default_udp_payload}. use small value to send more covert bits.", type=int, default=default_udp_payload, required=False) 
