@@ -119,6 +119,9 @@ class CovertSender:
         encoded_msg_chunks = split_message_into_chunks(encoded_msg, self.max_payload-8) # -8 is to be able to add sequence number in the beginning 
         if self.verbose: print(f"[INFO] Message is splitted into {len(encoded_msg_chunks)} chunks.")
 
+        # Add sequence number to each chunk
+        msg_str_list = [assign_sequence_number(chunk.decode(), i) for i, chunk in enumerate(encoded_msg_chunks)]
+        
         # Create a daemon to receive ACKs continuously
         ack_thread = threading.Thread(target=self.get_ACK, daemon=True)
         ack_thread.start()
@@ -133,8 +136,7 @@ class CovertSender:
             with self.lock: 
                 # Send all the packets within the window
                 while self.cur_pkt_idx < self.window_start + self.window_size:
-                    msg = encoded_msg_chunks[self.cur_pkt_idx]
-                    msg_str = assign_sequence_number(msg.decode(), self.cur_pkt_idx)
+                    msg_str = msg_str_list[self.cur_pkt_idx]
                     if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
 
                     if self.cur_pkt_idx >= self.total_covert_bits:
@@ -152,7 +154,8 @@ class CovertSender:
                     if idx not in self.received_acks:
                         if time.time() - packet_timers[idx] > self.timeout:
                             if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
-                            self._send_packet(encoded_msg_chunks[idx], self.covert_bits_str[idx])
+                            
+                            self._send_packet(msg_str_list[idx], self.covert_bits_str[idx])
                             packet_timers[idx] = time.time() # Reset the timer
 
     def _send_packet(self, message, cov_bit=None):
