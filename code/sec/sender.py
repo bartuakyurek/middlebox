@@ -48,7 +48,7 @@ def assign_sequence_number(msg_str, seq_number)->str:
 
 class CovertSender:
     def __init__(self, covert_msg, verbose=False, 
-                 window_size=5, timeout=5, max_udp_payload=1458, max_trans=3,
+                 window_size=5, timeout=5, max_udp_payload=1458, max_trans=3, 
                  port=9999, recv_port=8888):        
         self.verbose = verbose
         self.timeout = timeout
@@ -204,7 +204,7 @@ class CovertSender:
                     if self.verbose: print("Total packets sent: ", self.total_packets_sent, " total received ACKs:",
                                            len(self.received_acks) )
 
-    def process_and_send_msg(self, message):
+    def process_and_send_msg(self, message, wait_time=1):
         # Sends a legitimate message 
         # The given message is split into chunks of size max_payload
         # and sent over UDP with the covert bits embedded in the checksum field.
@@ -229,7 +229,7 @@ class CovertSender:
                 self.send_packets_within_window(packet_timers, packet_transmission_count, msg_str_list)
                 self.timeout_based_retransmissions(packet_transmission_count, packet_timers, msg_str_list)
         # Done sending 
-        time.sleep(1) # Sleep for last ACKs to be received
+        time.sleep(wait_time) # Sleep for last ACKs to be received
         self.stop_event.set() # Tell ACK daemon to stop
                                 
     def send_packet_with_covert(self, message, cov_bit=None):
@@ -297,7 +297,7 @@ def run_sender(args, **kwargs)->CovertSender:
 
     try:
         print("[INFO] Sending message... This might take a while.")
-        sender.process_and_send_msg(carrier_msg) 
+        sender.process_and_send_msg(carrier_msg, wait_time=args.senderwait) 
     except Exception as e:
         print(f"[ERROR] An error occurred: {e}")
     finally:
@@ -311,9 +311,10 @@ def get_args():
     #  return the parsed arguments
     default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "Covert." #"This is a covert message."
-    default_window_size = 1
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
-    
+    default_sender_wait = 10 # seconds before stopping ACK daemon
+
+    default_window_size = 1
     default_max_transmissions = 5
     default_timeout = 0.1   # seconds
 
@@ -321,12 +322,13 @@ def get_args():
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
     parser.add_argument("-c", "--covert", help="covert message to be sent", type=str, default=default_covert_msg, required=False)
     parser.add_argument("-o", "--overt", help="carrier message to be sent", type=str, default=default_carrier_msg, required=False)
-    
+    parser.add_argument("-s", "--udpsize", help=f"maximum UDP payload size, default {default_udp_payload}. use small value to send more covert bits.", type=int, default=default_udp_payload, required=False) 
+    parser.add_argument("-sw", "--senderwait", help=f"sleep time before closing the communication, default {default_sender_wait}", type=int, default=default_sender_wait, required=False)
+
+    parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
     parser.add_argument("-r", "--trans", help=f"maximum number of transmissions of the same packet, 1 to send packets only once, default {default_max_transmissions}", type=int, default=default_max_transmissions, required=False)
     parser.add_argument("-t", "--timeout", help=f"timeout in seconds, default {default_timeout}", type=float, default=default_timeout, required=False)
 
-    parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
-    parser.add_argument("-s", "--udpsize", help=f"maximum UDP payload size, default {default_udp_payload}. use small value to send more covert bits.", type=int, default=default_udp_payload, required=False) 
     
     args = parser.parse_args()
     return args
