@@ -164,7 +164,7 @@ class CovertSender:
             if idx not in self.received_acks:
                 if time.time() - packet_timers[idx] > self.timeout:
                     
-                    if packet_transmission_count[idx] > self.max_trans:
+                    if packet_transmission_count[idx] >= self.max_trans:
                         if self.verbose: print(f"[TIMEOUT] Maximum transmission limit reached for packet {idx}. Dropping it.")
                         assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
                         #self.received_acks[idx] = -1 # Mark it as missing 
