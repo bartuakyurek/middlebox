@@ -137,11 +137,9 @@ class CovertSender:
 
     def get_ACK(self, sleep_time=0.1):
         # Listen for ACKs until all the covert bits are sent
-        # timeout in seconds.
         # WARNING: This assumes the rest of the message is not ACKed
-        # so some packets after the covert bits may be lost
+        # so some packets after the covert bits may be lost.
 
-        #while self.cur_pkt_idx < self.total_covert_bits:
         # Wait until every packet is either ACKed or marked as dropped
         while len(self.received_acks) < self.total_covert_bits and not self.stop_event.is_set():
             data, addr = self.ack_sock.recvfrom(4096)
@@ -163,21 +161,21 @@ class CovertSender:
 
     def timeout_based_retransmissions(self, packet_transmission_count, packet_timers, msg_str_list):
         for idx in range(self.window_start, self.cur_pkt_idx):
-                    if idx not in self.received_acks:
-                        if time.time() - packet_timers[idx] > self.timeout:
-                            
-                            if packet_transmission_count[idx] > self.max_trans:
-                                if self.verbose: print(f"[TIMEOUT] Maximum transmission limit reached for packet {idx}. Dropping it.")
-                                assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
-                                self.received_acks[idx] = -1 # Mark it as missing 
-                                if self.window_start == idx: self.window_start += 1 # Slide the window
-                                
-                            else:
-                                if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
-                                self.send_packet_with_covert(msg_str_list[idx], self.covert_bits_str[idx])
-                                self.total_packets_sent += 1
-                                packet_timers[idx] = time.time() # Reset the timer
-                                packet_transmission_count[idx] += 1 # Increment transmission count
+            if idx not in self.received_acks:
+                if time.time() - packet_timers[idx] > self.timeout:
+                    
+                    if packet_transmission_count[idx] > self.max_trans:
+                        if self.verbose: print(f"[TIMEOUT] Maximum transmission limit reached for packet {idx}. Dropping it.")
+                        assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
+                        #self.received_acks[idx] = -1 # Mark it as missing 
+                        if self.window_start == idx: self.window_start += 1 # Slide the window
+                        
+                    else:
+                        if self.verbose: print(f"[TIMEOUT] Packet {idx} timed out. Resending...")
+                        self.send_packet_with_covert(msg_str_list[idx], self.covert_bits_str[idx])
+                        self.total_packets_sent += 1
+                        packet_timers[idx] = time.time() # Reset the timer
+                        packet_transmission_count[idx] += 1 # Increment transmission count
                                 
     def create_ack_thread(self):
         self.ack_thread = threading.Thread(target=self.get_ACK, daemon=True)
@@ -230,8 +228,9 @@ class CovertSender:
             with self.lock: 
                 self.send_packets_within_window(packet_timers, packet_transmission_count, msg_str_list)
                 self.timeout_based_retransmissions(packet_transmission_count, packet_timers, msg_str_list)
-        # Done sending (this tells ACK daemon to stop)
-        self.stop_event.set()
+        # Done sending 
+        time.sleep(1) # Sleep for last ACKs to be received
+        self.stop_event.set() # Tell ACK daemon to stop
                                 
     def send_packet_with_covert(self, message, cov_bit=None):
         # Send packet using UDP with ACK
