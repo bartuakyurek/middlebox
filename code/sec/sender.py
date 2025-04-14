@@ -150,7 +150,9 @@ class CovertSender:
                 if seq_num not in self.received_acks:
                     if self.verbose: print(f"[ACK] ({data}) received from {addr}. Sequence number: {seq_num}")
                     self.received_acks[seq_num] = time.time() # TODO: I assumed this could be useful for packet stats, but is it used?
-                #else:
+                else:
+                     if self.received_acks[seq_num] == -1:
+                        self.received_acks[seq_num] = time.time() # Mark dropped packet it as received
                 #    if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
 
                 while self.window_start in self.received_acks: 
@@ -167,7 +169,7 @@ class CovertSender:
                     if packet_transmission_count[idx] >= self.max_trans:
                         if self.verbose: print(f"[TIMEOUT] Maximum transmission limit reached for packet {idx}. Dropping it.")
                         assert not idx in self.received_acks, f"[ERROR] Packet {idx} should not be in received_acks."
-                        #self.received_acks[idx] = -1 # Mark it as missing 
+                        self.received_acks[idx] = -1 # Mark it as missing 
                         if self.window_start == idx: self.window_start += 1 # Slide the window
                         
                     else:
@@ -202,7 +204,7 @@ class CovertSender:
                     packet_transmission_count[self.cur_pkt_idx] = 1 # Initialize transmission count
                     self.cur_pkt_idx += 1
                     if self.verbose: print("Total packets sent: ", self.total_packets_sent, " total received ACKs:",
-                                           len(self.received_acks) )
+                                           self.count_successful_transmissions() )
 
     def process_and_send_msg(self, message, wait_time=1):
         # Sends a legitimate message 
