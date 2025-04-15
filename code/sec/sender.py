@@ -308,7 +308,7 @@ def run_sender(args, **kwargs)->CovertSender:
         print("[INFO] Sending message... This might take a while.")
         sender.process_and_send_msg(carrier_msg, wait_time=args.senderwait) 
     except Exception as e:
-        print(f"[ERROR] An error occurred: {e}")
+        print(f"[ERROR] An error occurred on the sender side: {e}")
     finally:
         sender.shutdown()
         print("[INFO] Sending completed. Socket closed. Stop receiver process to see the message.")
