@@ -160,6 +160,7 @@ class CovertSender:
                     if self.verbose: print(f"[SLIDE] Window is slided to {self.window_start}.")
 
             time.sleep(sleep_time) # Sleep to let the other threads acquire the lock more easily
+        #self.stop_event.set() # Tell the sender to stop sending packets
 
     def timeout_based_retransmissions(self, packet_transmission_count, packet_timers, msg_str_list):
         for idx in range(self.window_start, self.cur_pkt_idx):
@@ -231,7 +232,13 @@ class CovertSender:
                 self.send_packets_within_window(packet_timers, packet_transmission_count, msg_str_list)
                 self.timeout_based_retransmissions(packet_transmission_count, packet_timers, msg_str_list)
         # Done sending 
+        if self.verbose: print(f"[INFO] All packets sent. Waiting extra {wait_time} seconds for ACKs...")
         time.sleep(wait_time) # Sleep for last ACKs to be received
+        
+        #self.stop_event.clear()
+        #sender_end_time = time.time()
+        #while (time.time() - sender_end_time < wait_time) and not self.stop_event.is_set(): 
+        #    pass
         self.stop_event.set() # Tell ACK daemon to stop
                                 
     def send_packet_with_covert(self, message, cov_bit=None):
@@ -314,11 +321,11 @@ def get_args():
     default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "Covert." #"This is a covert message."
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
-    default_sender_wait = 10 # seconds before stopping ACK daemon
+    default_sender_wait = 5 # seconds before stopping ACK daemon
 
-    default_window_size = 1
+    default_window_size = 5
     default_max_transmissions = 5
-    default_timeout = 0.1   # seconds
+    default_timeout = 0.5   # seconds
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
