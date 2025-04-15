@@ -104,7 +104,7 @@ def plot_statistics(output_dict, arg_name, metric_name):
     # --------------------------------------------------------------
     stats_dict = output_dict['stats'] 
     fixed_args_dict = output_dict['fixed_args']
-    print("Statistics: ", stats_dict)
+    
     assert_type(stats_dict, dict, "stats")
     assert_type(arg_name, str, "arg_name")
     assert_type(metric_name, str, "metric_name")
