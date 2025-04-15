@@ -7,7 +7,7 @@ from scapy.all import Ether
 from nats.aio.client import Client as NATS
 
 class UDP_Checksum_Processor:
-    def __init__(self, nc, topic_dict, mean_delay=0):
+    def __init__(self, nc, topic_dict, mean_delay=1e-2):
         self.nc = nc
         self.topic_dict = topic_dict
         self.mean_delay = mean_delay
@@ -68,7 +68,7 @@ async def run(mean_delay=0):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-d', '--delay', type=float, default=0, help='Specify the average delay to be added before sending packets in seconds.')
+    parser.add_argument('-d', '--delay', type=float, default=1e-2, help='Specify the average delay to be added before sending packets in seconds.')
 
     args = parser.parse_args()
     
