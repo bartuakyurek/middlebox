@@ -60,7 +60,7 @@ class CovertSender:
 
         self.total_covert_bits = len(self.covert_bits_str)
 
-        if verbose: print(f"[INFO] Covert bits string: {self.covert_bits_str}")
+        if verbose: print(f"[DEBUG] Covert bits string: {self.covert_bits_str}")
         print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
 
         self.port = port
@@ -77,7 +77,7 @@ class CovertSender:
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
 
-        if verbose: print("[INFO] CovertSender created. Call send() to start sending packets.")
+        if verbose: print("[DEBUG] CovertSender created. Call send() to start sending packets.")
 
     def get_host(self, IP_NAME='INSECURENET_HOST_IP'):
         host = os.getenv(IP_NAME)
@@ -89,7 +89,7 @@ class CovertSender:
          
          sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP socket
          sock.bind((ip, port))
-         if self.verbose: print("[INFO] Socket created successfully.")
+         if self.verbose: print("[DEBUG] Socket created successfully.")
          return sock
     
     def shutdown(self):
@@ -128,7 +128,7 @@ class CovertSender:
         
         capacity = n_success / n_total
         if self.verbose: 
-            print(f"[INFO] Capacity: {capacity:.2%} ({n_success}/{n_total})")
+            print(f"[DEBUG] Capacity: {capacity:.2%} ({n_success}/{n_total})")
             print(f"[WARNING] This capacity assumes the packet wasn't delivered if ACK wasn't received within the timeout but in fact,\n \
                     ACK may come later than the timeout, so the capacity may be higher than this value. Check the receiver's covert message to verify.")
 
@@ -182,7 +182,7 @@ class CovertSender:
     def create_ack_thread(self):
         self.ack_thread = threading.Thread(target=self.get_ACK, daemon=True)
         self.ack_thread.start()
-        if self.verbose: print("[INFO] ACK thread started.")
+        if self.verbose: print("[DEBUG] ACK thread started.")
 
     def send_packets_within_window(self, packet_timers, packet_transmission_count, msg_str_list):
         # Send all the packets within the window
@@ -190,10 +190,10 @@ class CovertSender:
                     if self.verbose: print("Current bit index:", self.cur_pkt_idx) 
 
                     msg_str = msg_str_list[self.cur_pkt_idx]
-                    if self.verbose: print(f"[INFO] Appended sequence number to message: {msg_str}")
+                    if self.verbose: print(f"[DEBUG] Appended sequence number to message: {msg_str}")
 
                     if self.cur_pkt_idx >= self.total_covert_bits:
-                        if self.verbose: print("[INFO] All bits have been sent...")
+                        if self.verbose: print("[DEBUG] All bits have been sent...")
                         bit = None
                     else:                
                         bit = self.covert_bits_str[self.cur_pkt_idx]
@@ -231,7 +231,7 @@ class CovertSender:
                 self.send_packets_within_window(packet_timers, packet_transmission_count, msg_str_list)
                 self.timeout_based_retransmissions(packet_transmission_count, packet_timers, msg_str_list)
         # Done sending 
-        if self.verbose: print(f"[INFO] All packets sent. Waiting extra {wait_time} seconds for ACKs...")
+        if self.verbose: print(f"[DEBUG] All packets sent. Waiting extra {wait_time} seconds for ACKs...")
         time.sleep(wait_time) # Sleep for last ACKs to be received
         
         #self.stop_event.clear()
@@ -256,7 +256,7 @@ class CovertSender:
         
         pkt = ip/udp/Raw(load=message)
         send(pkt, verbose=False)
-        if self.verbose: print(f"[INFO] Message sent to {self.recv_ip}:{self.dport}")
+        if self.verbose: print(f"[DEBUG] Message sent to {self.recv_ip}:{self.dport}")
             
     def _convert_to_covert_bits_str(self, covert_msg_str, header_len)->str:
         assert_type(covert_msg_str, str, "covert message")
