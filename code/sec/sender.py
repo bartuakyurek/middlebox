@@ -22,7 +22,6 @@ import argparse
 import threading
 from scapy.all import IP, UDP, Raw, send
 
-# Define the maximum allowed packet size (adjust based on your network MTU)
 
 def assert_type(obj, desired_type, note=""):
     assert isinstance(obj, desired_type), f"[ERROR] Expected {note} to be type {desired_type}, got {type(obj)}"
@@ -49,7 +48,7 @@ def assign_sequence_number(msg_str, seq_number)->str:
 class CovertSender:
     def __init__(self, covert_msg, verbose=False, 
                  window_size=5, timeout=5, max_udp_payload=1458, max_trans=3, 
-                 port=9999, recv_port=8888):        
+                 port=9999, dport=8888):        
         self.verbose = verbose
         self.timeout = timeout
         self.max_payload = max_udp_payload
@@ -65,7 +64,7 @@ class CovertSender:
         print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
 
         self.port = port
-        self.recv_port = recv_port
+        self.dport = dport
         self.recv_ip = self.get_host()
         self.received_acks = {} # Store sequence numbers as well as their timestamps
         self.ack_sock = self.create_udp_socket('', self.port) # Socket dedicated to receive ACK
@@ -246,7 +245,7 @@ class CovertSender:
         # Returns 0 if message sent successfully
         # -1 if it cannot be delivered in max_resend trials.
         ip = IP(dst=self.recv_ip)
-        udp = UDP(dport=self.recv_port, sport=self.port)
+        udp = UDP(dport=self.dport, sport=self.port)
         # Covert bit as checksum field existence
         if cov_bit == '1' or cov_bit == None: # None when no covrt bit is sent
             udp.chksum = None  # Let OS/scapy compute it
@@ -257,7 +256,7 @@ class CovertSender:
         
         pkt = ip/udp/Raw(load=message)
         send(pkt, verbose=False)
-        if self.verbose: print(f"[INFO] Message sent to {self.recv_ip}:{self.recv_port}")
+        if self.verbose: print(f"[INFO] Message sent to {self.recv_ip}:{self.dport}")
             
     def _convert_to_covert_bits_str(self, covert_msg_str, header_len)->str:
         assert_type(covert_msg_str, str, "covert message")
