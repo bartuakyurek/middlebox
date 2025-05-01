@@ -56,7 +56,7 @@ class CovertSender:
         self.covert_msg = covert_msg
 
         self.HEADER_LEN = 8       
-        self.covert_bits_str = self._convert_to_covert_bits_str(covert_msg, self.HEADER_LEN)
+        self.covert_bits_str = self._get_covert_bitstream(covert_msg, self.HEADER_LEN)
 
         self.total_covert_bits = len(self.covert_bits_str)
 
@@ -258,13 +258,18 @@ class CovertSender:
         send(pkt, verbose=False)
         if self.verbose: print(f"[DEBUG] Message sent to {self.recv_ip}:{self.dport}")
             
-    def _convert_to_covert_bits_str(self, covert_msg_str, header_len)->str:
+    def _get_covert_bitstream(self, covert_msg_str, header_len)->str:
+        # Given a covert message string and number of bits 
+        # in the header, return string of bits to be sent covertly
+        # header_len : number of bits in header, 
+        #              where header represents the length of covert message string
+        #              should be at least N bits where 2^N >= len(bits of covert msg) 
         assert_type(covert_msg_str, str, "covert message")
         assert_type(header_len, int, "header length")
         covert_bytes = covert_msg_str.encode()
         covert_len = len(covert_bytes)
 
-        covert_len_bits_str = bin(covert_len)[2:]
+        covert_len_bits_str = bin(covert_len)[2:] # number of bits needed to represent covert msg length
         assert len(covert_len_bits_str) <= self.HEADER_LEN, f"[ERROR] Length of the covert message exceeds maximum length allowed. At least {len(covert_len_bits_str)} bits needed, current header length is {self.HEADER_LEN}"
         covert_len_bits_str_padded = covert_len_bits_str.zfill(self.HEADER_LEN) # Pad remaining bits with zeroes
         
