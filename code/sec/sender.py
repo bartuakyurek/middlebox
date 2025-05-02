@@ -17,6 +17,7 @@ E.g. to send 3 bits of covert message, and fixed header is 8 bits, send: 0000 00
 
 import os
 import time
+import random
 import socket
 import argparse
 import threading
@@ -46,23 +47,19 @@ def assign_sequence_number(msg_str, seq_number)->str:
 
 
 class CovertSender:
-    def __init__(self, covert_msg, verbose=False, 
+    def __init__(self, verbose=False, 
                  window_size=5, timeout=5, max_udp_payload=1458, max_trans=3, 
                  port=9999, dport=8888):        
+        
+        self.HEADER_LEN = 8       
+        self.covert_bits_str = "" # Covert bits to be sent
+        self.session_covert_bits_len = 0
+
         self.verbose = verbose
         self.timeout = timeout
         self.max_payload = max_udp_payload
         self.max_trans = max_trans
-        self.covert_msg = covert_msg
-
-        self.HEADER_LEN = 8       
-        self.covert_bits_str = self._get_covert_bitstream(covert_msg, self.HEADER_LEN)
-
-        self.total_covert_bits = len(self.covert_bits_str)
-
-        if verbose: print(f"[DEBUG] Covert bits string: {self.covert_bits_str}")
-        print(f"[INFO] There are {self.total_covert_bits} bits to be sent covertly.")
-
+        
         self.port = port
         self.dport = dport
         self.recv_ip = self.get_host()
@@ -140,7 +137,7 @@ class CovertSender:
         # so some packets after the covert bits may be lost.
 
         # Wait until every packet is either ACKed or marked as dropped
-        while len(self.received_acks) < self.total_covert_bits and not self.stop_event.is_set():
+        while len(self.received_acks) < self.session_covert_bits_len and not self.stop_event.is_set():
             data, addr = self.ack_sock.recvfrom(4096)
             seq_num = int(data.decode())
             
@@ -189,10 +186,16 @@ class CovertSender:
                 while self.cur_pkt_idx < self.window_start + self.window_size:
                     if self.verbose: print("Current bit index:", self.cur_pkt_idx) 
 
+                    if self.cur_pkt_idx >= len(msg_str_list):
+                        if self.verbose: print("[INFO] No more overt packets to send.")
+                        if self.cur_pkt_idx < self.session_covert_bits_len:
+                            if self.verbose: print("[WARNING] Not all covert bits can be sent. Out of carrier message.")
+                        break
+
                     msg_str = msg_str_list[self.cur_pkt_idx]
                     if self.verbose: print(f"[DEBUG] Appended sequence number to message: {msg_str}")
 
-                    if self.cur_pkt_idx >= self.total_covert_bits:
+                    if self.cur_pkt_idx >= self.session_covert_bits_len:
                         if self.verbose: print("[DEBUG] All bits have been sent...")
                         bit = None
                     else:                
@@ -206,18 +209,30 @@ class CovertSender:
                     if self.verbose: print("Total packets sent: ", self.total_packets_sent, " total received ACKs:",
                                            self.count_successful_transmissions() )
 
-    def process_and_send_msg(self, message, wait_time=1):
+    def process_and_send_msg(self, message, covert_msg="", wait_time=1):
         # Sends a legitimate message 
         # The given message is split into chunks of size max_payload
         # and sent over UDP with the covert bits embedded in the checksum field.
+
+        # top of process_and_send_msg
+        self.cur_pkt_idx = 0
+        self.window_start = 0
+        self.received_acks.clear()
+
         encoded_msg = message.encode() 
         encoded_msg_chunks = split_message_into_chunks(encoded_msg, self.max_payload-8) # -8 is to be able to add sequence number in the beginning 
-        print(f"[INFO] Message is splitted into {len(encoded_msg_chunks)} packets.")
-        assert len(encoded_msg_chunks) >= self.total_covert_bits, f"[ERROR] Number of packets are not enough for the number of covert bits {len(encoded_msg_chunks)} < {self.total_covert_bits}, please increase the carrier message length."
+        if self.verbose: print(f"[DEBUG] Message is splitted into {len(encoded_msg_chunks)} packets.")
+        assert len(encoded_msg_chunks) >= self.session_covert_bits_len, f"[ERROR] Number of packets are not enough for the number of covert bits {len(encoded_msg_chunks)} < {self.session_covert_bits_len}, please increase the carrier message length."
 
         # Add sequence number to each chunk
         msg_str_list = [assign_sequence_number(chunk.decode(), i) for i, chunk in enumerate(encoded_msg_chunks)]
         
+        self.covert_bits_str = self._get_covert_bitstream(covert_msg, self.HEADER_LEN)
+        
+        self.session_covert_bits_len = len(self.covert_bits_str)
+        if self.verbose: print(f"[DEBUG] Covert bits string: {self.covert_bits_str}")
+        if self.verbose: print(f"[DEBUG] There are {self.session_covert_bits_len} bits to be sent covertly.")
+
         # Create a daemon to receive ACKs continuously
         self.stop_event.clear()
         self.create_ack_thread()
@@ -226,7 +241,7 @@ class CovertSender:
         # WARNING: This assumes the rest of the message after all the
         # covert bits are sent, can be dropped. (See get_ACK() Warning)
         packet_timers, packet_transmission_count = {}, {}
-        while self.cur_pkt_idx < self.total_covert_bits: #len(encoded_msg_chunks):    
+        while self.cur_pkt_idx < self.session_covert_bits_len: #len(encoded_msg_chunks):    
             with self.lock: 
                 self.send_packets_within_window(packet_timers, packet_transmission_count, msg_str_list)
                 self.timeout_based_retransmissions(packet_transmission_count, packet_timers, msg_str_list)
@@ -234,10 +249,7 @@ class CovertSender:
         if self.verbose: print(f"[DEBUG] All packets sent. Waiting extra {wait_time} seconds for ACKs...")
         time.sleep(wait_time) # Sleep for last ACKs to be received
         
-        #self.stop_event.clear()
-        #sender_end_time = time.time()
-        #while (time.time() - sender_end_time < wait_time) and not self.stop_event.is_set(): 
-        #    pass
+
         self.stop_event.set() # Tell ACK daemon to stop
                                 
     def send_packet_with_covert(self, message, cov_bit=None):
@@ -279,7 +291,7 @@ class CovertSender:
 
 def run_sender(args, **kwargs)->CovertSender:
     # Create a CovertSender object and send the covert message
-    # 
+    #  
     # See get_args() to configure default arguments
     # and pass optional arguments as kwargs.
     # 
@@ -304,13 +316,21 @@ def run_sender(args, **kwargs)->CovertSender:
     udpsize = kwargs.get('max_udp_payload', args.udpsize)
     trans = kwargs.get('max_transmissions', args.trans)
 
-    sender = CovertSender(covert_msg=covert_msg, verbose=verbose, 
+    sender = CovertSender(verbose=verbose, 
                           window_size=window, timeout=timeout, 
                           max_udp_payload=udpsize, max_trans=trans)
 
     try:
-        print("[INFO] Sending message... This might take a while.")
-        sender.process_and_send_msg(carrier_msg, wait_time=args.senderwait) 
+        print("-"*50)
+        while True:
+            prob_cov = 0.8 # rand
+            if random.random() < prob_cov:
+                print(f"[INFO] Sending covert message...")
+                sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
+            else:
+                print(f"[INFO] Sending overt-only message...")
+                sender.process_and_send_msg(carrier_msg, wait_time=args.senderwait) 
+            
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
     finally:
@@ -353,3 +373,4 @@ if __name__ == '__main__':
     args = get_args()
     sender = run_sender(args)
     print("Covert Channel capacity: ", sender.get_capacity() , " bits per packet.")
+
