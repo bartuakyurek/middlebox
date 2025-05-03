@@ -171,7 +171,8 @@ def extract_metric_from_dict(stats_dict, metric_name)->tuple:
 def run_single_param_experiment(args, arg_name, arg_values, num_trials):
     arg_stats = change_one_arg_and_run(args, arg_name, arg_values, num_trials=num_trials)
     
-    available_metrics = arg_stats['stats'][1].keys() # WARNING Assumes same keys used in other stats as well 
+    a_key = [key for key in arg_stats['stats'].keys()][0]
+    available_metrics = arg_stats['stats'][a_key].keys() # WARNING Assumes same keys used in other stats as well 
     for metric_name in available_metrics:
         plot_statistics(arg_stats, arg_name, metric_name)
 
