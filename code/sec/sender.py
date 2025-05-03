@@ -330,7 +330,7 @@ def run_sender(args, **kwargs)->CovertSender:
 
         save_session_csv(
                         sender,
-                        session_id=i,
+                        session_id=0,
                         covert_msg=covert_msg,
                         overt_msg=carrier_msg,
                         mode=mode  # "covert" or "overt"
