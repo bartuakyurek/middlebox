@@ -21,6 +21,7 @@ import random
 import socket
 import argparse
 import threading
+from threading import Thread
 from scapy.all import IP, UDP, Raw, send
 
 
@@ -181,33 +182,40 @@ class CovertSender:
         self.ack_thread.start()
         if self.verbose: print("[DEBUG] ACK thread started.")
 
+    
     def send_packets_within_window(self, packet_timers, packet_transmission_count, msg_str_list):
-        # Send all the packets within the window
-                while self.cur_pkt_idx < self.window_start + self.window_size:
-                    if self.verbose: print("Current bit index:", self.cur_pkt_idx) 
+        threads = []
 
-                    if self.cur_pkt_idx >= len(msg_str_list):
-                        if self.verbose: print("[INFO] No more overt packets to send.")
-                        if self.cur_pkt_idx < self.session_covert_bits_len:
-                            if self.verbose: print("[WARNING] Not all covert bits can be sent. Out of carrier message.")
-                        break
+        while self.cur_pkt_idx < self.window_start + self.window_size:
+            if self.verbose: print("Current bit index:", self.cur_pkt_idx)
 
-                    msg_str = msg_str_list[self.cur_pkt_idx]
-                    if self.verbose: print(f"[DEBUG] Appended sequence number to message: {msg_str}")
+            if self.cur_pkt_idx >= len(msg_str_list):
+                if self.verbose: print("[INFO] No more overt packets to send.")
+                if self.cur_pkt_idx < self.session_covert_bits_len:
+                    if self.verbose: print("[WARNING] Not all covert bits can be sent. Out of carrier message.")
+                break
 
-                    if self.cur_pkt_idx >= self.session_covert_bits_len:
-                        if self.verbose: print("[DEBUG] All bits have been sent...")
-                        bit = None
-                    else:                
-                        bit = self.covert_bits_str[self.cur_pkt_idx]
-   
-                    self.send_packet_with_covert(msg_str, bit)
-                    self.total_packets_sent += 1
-                    packet_timers[self.cur_pkt_idx] = time.time()
-                    packet_transmission_count[self.cur_pkt_idx] = 1 # Initialize transmission count
-                    self.cur_pkt_idx += 1
-                    if self.verbose: print("Total packets sent: ", self.total_packets_sent, " total received ACKs:",
-                                           self.count_successful_transmissions() )
+            msg_str = msg_str_list[self.cur_pkt_idx]
+            bit = None if self.cur_pkt_idx >= self.session_covert_bits_len else self.covert_bits_str[self.cur_pkt_idx]
+            
+            # Prepare thread to send this packet
+            t = Thread(target=self._send_and_track, args=(self.cur_pkt_idx, msg_str, bit, packet_timers, packet_transmission_count))
+            threads.append(t)
+            t.start()
+
+            self.cur_pkt_idx += 1
+
+        for t in threads:
+            t.join()  # Optional: Wait for all threads to finish
+
+    def _send_and_track(self, idx, msg_str, bit, packet_timers, packet_transmission_count):
+        self.send_packet_with_covert(msg_str, bit)
+        self.total_packets_sent += 1
+        packet_timers[idx] = time.time()
+        packet_transmission_count[idx] = 1
+        if self.verbose:
+            print("[DEBUG] Total packets sent:", self.total_packets_sent,
+                "[DEBUG] total received ACKs:", self.count_successful_transmissions())
 
     def process_and_send_msg(self, message, covert_msg="", wait_time=1):
         # Sends a legitimate message 
