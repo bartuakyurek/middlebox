@@ -315,24 +315,20 @@ def run_sender(args, **kwargs)->CovertSender:
     window = kwargs.get('window_size', args.window)
     udpsize = kwargs.get('max_udp_payload', args.udpsize)
     trans = kwargs.get('max_transmissions', args.trans)
-    num_runs = kwargs.get('numruns', args.numruns)
 
     sender = CovertSender(verbose=verbose, 
                           window_size=window, timeout=timeout, 
                           max_udp_payload=udpsize, max_trans=trans)
 
     try:
-        
-        for i in range(num_runs):
-            print(f"{i+1}/{num_runs}\t" + "-"*50)
-
-            prob_cov = 0.8 # rand
-            if random.random() < prob_cov:
-                print(f"[INFO] Sending covert message...")
-                sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
-            else:
-                print(f"[INFO] Sending overt-only message...")
-                sender.process_and_send_msg(carrier_msg, wait_time=args.senderwait) 
+        print("-"*50)
+        #prob_cov = 0.8 # rand
+        #if random.random() < prob_cov:
+        print(f"[INFO] Sending covert message...")
+        sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
+        #else:
+        #    print(f"[INFO] Sending overt-only message...")
+        #    sender.process_and_send_msg(carrier_msg, wait_time=args.senderwait) 
             
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
@@ -353,7 +349,6 @@ def get_args():
     default_window_size = 5
     default_max_transmissions = 1
     default_timeout = 0.5   # seconds
-    default_num_runs = 1
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
@@ -365,9 +360,7 @@ def get_args():
     parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
     parser.add_argument("-r", "--trans", help=f"maximum number of transmissions of the same packet, 1 to send packets only once, default {default_max_transmissions}", type=int, default=default_max_transmissions, required=False)
     parser.add_argument("-t", "--timeout", help=f"timeout in seconds, default {default_timeout}", type=float, default=default_timeout, required=False)
-    parser.add_argument("-n", "--numruns", help=f"number of runs to send input messages, default {default_num_runs}", type=int, default=default_num_runs, required=False)
 
-    
     args = parser.parse_args()
     return args
 
