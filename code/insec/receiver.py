@@ -91,7 +91,7 @@ class CovertReceiver:
             if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
 
             # Print coverts received until now (every N steps)
-            if (seq_number + 1) % 10 == 0:
+            if (seq_number + 1) % 8 == 0:
                 print(self.get_covert_msg())
 
     def start_udp_listener(self):
