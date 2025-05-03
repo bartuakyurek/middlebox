@@ -90,6 +90,10 @@ class CovertReceiver:
             sent = self.sock.sendto(ack, (sender_ip, self.dest_port))
             if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
 
+            # Print coverts received until now (every N steps)
+            if (seq_number + 1) % 10 == 0:
+                print(self.get_covert_msg())
+
     def start_udp_listener(self):
         if self.verbose: print("Receiver is running...")
         sniff(filter=f"udp and dst port {self.port}", prn=self.packet_callback, store=False)        
