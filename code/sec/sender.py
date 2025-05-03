@@ -131,7 +131,7 @@ class CovertSender:
 
         return capacity
 
-    def get_ACK(self, sleep_time=0.1):
+    def get_ACK(self, sleep_time=0.01):
         # Listen for ACKs until all the covert bits are sent
         # WARNING: This assumes the rest of the message is not ACKed
         # so some packets after the covert bits may be lost.
@@ -344,7 +344,7 @@ def get_args():
     default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "Covert."*3 #"This is a covert message."
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
-    default_sender_wait = 5 # seconds before stopping ACK daemon
+    default_sender_wait = 1 # seconds before stopping ACK daemon
 
     default_window_size = 5
     default_max_transmissions = 1
@@ -367,8 +367,20 @@ def get_args():
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
+    import time
 
     args = get_args()
+
+    start = time.time()
     sender = run_sender(args)
-    print("Covert Channel capacity: ", sender.get_capacity() , " bits per packet.")
+    end = time.time()
+
+    elapsed_secs = end - start
+    print(f"Sending took {elapsed_secs:.2f} seconds.")
+    print(f"Sent {sender.session_covert_bits_len} covert bits.")
+    print("Covert Channel capacity: ")
+
+    bps_capacity = sender.session_covert_bits_len / elapsed_secs 
+    print(f"\t {bps_capacity:.2f} covert bits per second.")
+    print(f"\t {sender.get_capacity():.2f} covert bits per packet.")
 
