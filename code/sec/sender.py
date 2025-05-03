@@ -315,14 +315,17 @@ def run_sender(args, **kwargs)->CovertSender:
     window = kwargs.get('window_size', args.window)
     udpsize = kwargs.get('max_udp_payload', args.udpsize)
     trans = kwargs.get('max_transmissions', args.trans)
+    num_runs = kwargs.get('numruns', args.numruns)
 
     sender = CovertSender(verbose=verbose, 
                           window_size=window, timeout=timeout, 
                           max_udp_payload=udpsize, max_trans=trans)
 
     try:
-        print("-"*50)
-        while True:
+        
+        for i in range(num_runs):
+            print(f"{i+1}/{num_runs}\t" + "-"*50)
+
             prob_cov = 0.8 # rand
             if random.random() < prob_cov:
                 print(f"[INFO] Sending covert message...")
@@ -343,13 +346,14 @@ def get_args():
     # Create a parser and set default values
     #  return the parsed arguments
     default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
-    default_covert_msg =  "Covert." #"This is a covert message."
+    default_covert_msg =  "Covert."*3 #"This is a covert message."
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     default_sender_wait = 5 # seconds before stopping ACK daemon
 
     default_window_size = 5
-    default_max_transmissions = 5
+    default_max_transmissions = 1
     default_timeout = 0.5   # seconds
+    default_num_runs = 1
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
@@ -361,6 +365,7 @@ def get_args():
     parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
     parser.add_argument("-r", "--trans", help=f"maximum number of transmissions of the same packet, 1 to send packets only once, default {default_max_transmissions}", type=int, default=default_max_transmissions, required=False)
     parser.add_argument("-t", "--timeout", help=f"timeout in seconds, default {default_timeout}", type=float, default=default_timeout, required=False)
+    parser.add_argument("-n", "--numruns", help=f"number of runs to send input messages, default {default_num_runs}", type=int, default=default_num_runs, required=False)
 
     
     args = parser.parse_args()
