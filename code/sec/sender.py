@@ -25,6 +25,7 @@ import threading
 from threading import Thread
 from scapy.all import IP, UDP, Raw, send
 
+from utils import save_session_csv
 
 def assert_type(obj, desired_type, note=""):
     assert isinstance(obj, desired_type), f"[ERROR] Expected {note} to be type {desired_type}, got {type(obj)}"
@@ -334,16 +335,28 @@ def run_sender(args, **kwargs)->CovertSender:
     try:
 
         prob_cov = args.probcov # Probability of sending covert message
+        
         if random.random() < prob_cov:
+            mode = "covert"
             print(f"[INFO] Sending covert message...")
             sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
         else:
+            mode = "overt"
             num_dummy_chars = random.randint(1,10) 
             dummy_covert = random_string(num_dummy_chars) 
 
             print(f"[INFO] Sending overt-only message with dummy covert: {dummy_covert}")
             sender.process_and_send_msg(carrier_msg, dummy_covert, wait_time=args.senderwait) 
             
+
+        save_session_csv(
+                        sender,
+                        session_id=i,
+                        covert_msg=covert_msg,
+                        overt_msg=carrier_msg,
+                        mode=mode  # "covert" or "overt"
+                        )
+
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
     finally:
@@ -391,8 +404,8 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    NUM_RUNS = 3
-    for _ in range(NUM_RUNS):
+    NUM_RUNS = 1
+    for i in range(NUM_RUNS):
         print("-"*50)
         start = time.time()
         sender = run_sender(args)
@@ -406,4 +419,3 @@ if __name__ == '__main__':
         bps_capacity = sender.session_covert_bits_len / elapsed_secs 
         print(f"\t {bps_capacity:.2f} covert bits per second.")
         print(f"\t {sender.get_capacity():.2f} covert bits per packet.")
-
