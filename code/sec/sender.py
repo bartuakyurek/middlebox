@@ -17,6 +17,7 @@ E.g. to send 3 bits of covert message, and fixed header is 8 bits, send: 0000 00
 
 import os
 import time
+import string
 import random
 import socket
 import argparse
@@ -27,6 +28,9 @@ from scapy.all import IP, UDP, Raw, send
 
 def assert_type(obj, desired_type, note=""):
     assert isinstance(obj, desired_type), f"[ERROR] Expected {note} to be type {desired_type}, got {type(obj)}"
+
+def random_string(length):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def message_to_bits(msg)->str:
     # msg : str or bytes
@@ -256,8 +260,7 @@ class CovertSender:
         # Done sending 
         if self.verbose: print(f"[DEBUG] All packets sent. Waiting extra {wait_time} seconds for ACKs...")
         time.sleep(wait_time) # Sleep for last ACKs to be received
-        
-
+    
         self.stop_event.set() # Tell ACK daemon to stop
                                 
     def send_packet_with_covert(self, message, cov_bit=None):
@@ -329,14 +332,17 @@ def run_sender(args, **kwargs)->CovertSender:
                           max_udp_payload=udpsize, max_trans=trans)
 
     try:
-        print("-"*50)
-        #prob_cov = 0.8 # rand
-        #if random.random() < prob_cov:
-        print(f"[INFO] Sending covert message...")
-        sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
-        #else:
-        #    print(f"[INFO] Sending overt-only message...")
-        #    sender.process_and_send_msg(carrier_msg, wait_time=args.senderwait) 
+
+        prob_cov = 0.3 # Probability of sending covert message
+        if random.random() < prob_cov:
+            print(f"[INFO] Sending covert message...")
+            sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
+        else:
+            num_dummy_chars = random.randint(1,10) 
+            dummy_covert = random_string(num_dummy_chars) 
+
+            print(f"[INFO] Sending overt-only message with dummy covert: {dummy_covert}")
+            sender.process_and_send_msg(carrier_msg, dummy_covert, wait_time=args.senderwait) 
             
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
@@ -349,7 +355,10 @@ def run_sender(args, **kwargs)->CovertSender:
 def get_args():
     # Create a parser and set default values
     #  return the parsed arguments
-    default_carrier_msg = "Hello, this is a long message. " * 90 # WARNING : Carrier must be much longer than covert message for now.
+    # WARNING: Content of carrier message is assumed to be unimportant, i.e.
+    # this sender will send packets until all covert bits are sent, ignoring
+    # remaining carrier message packets after that point.
+    default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "Covert."*3 #"This is a covert message."
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     default_sender_wait = 1 # seconds before stopping ACK daemon
@@ -379,16 +388,19 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    start = time.time()
-    sender = run_sender(args)
-    end = time.time()
+    NUM_RUNS = 3
+    for _ in range(NUM_RUNS):
+        print("-"*50)
+        start = time.time()
+        sender = run_sender(args)
+        end = time.time()
 
-    elapsed_secs = end - start
-    print(f"Sending took {elapsed_secs:.2f} seconds.")
-    print(f"Sent {sender.session_covert_bits_len} covert bits.")
-    print("Covert Channel capacity: ")
+        elapsed_secs = end - start
+        print(f"Sending took {elapsed_secs:.2f} seconds.")
+        print(f"Sent {sender.session_covert_bits_len} covert bits.")
+        print("Covert Channel capacity: ")
 
-    bps_capacity = sender.session_covert_bits_len / elapsed_secs 
-    print(f"\t {bps_capacity:.2f} covert bits per second.")
-    print(f"\t {sender.get_capacity():.2f} covert bits per packet.")
+        bps_capacity = sender.session_covert_bits_len / elapsed_secs 
+        print(f"\t {bps_capacity:.2f} covert bits per second.")
+        print(f"\t {sender.get_capacity():.2f} covert bits per packet.")
 
