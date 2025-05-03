@@ -17,7 +17,6 @@ E.g. to send 3 bits of covert message, and fixed header is 8 bits, send: 0000 00
 
 import os
 import time
-import string
 import random
 import socket
 import argparse
@@ -25,32 +24,12 @@ import threading
 from threading import Thread
 from scapy.all import IP, UDP, Raw, send
 
+from utils import assert_type
+from utils import random_string
+from utils import message_to_bits
+from utils import assign_sequence_number
+from utils import split_message_into_chunks
 from utils import save_session_csv
-
-def assert_type(obj, desired_type, note=""):
-    assert isinstance(obj, desired_type), f"[ERROR] Expected {note} to be type {desired_type}, got {type(obj)}"
-
-def random_string(length):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-
-def message_to_bits(msg)->str:
-    # msg : str or bytes
-    if isinstance(msg, str): msg = msg.encode()
-    assert_type(msg, bytes, "message")
-    return ''.join(format(byte, '08b') for byte in msg)
-
-def split_message_into_chunks(encoded_message, chunk_size)->list:
-    chunks = []
-    for i in range(0, len(encoded_message), chunk_size):
-        chunk = encoded_message[i:i + chunk_size]
-        chunks.append(chunk)
-    return chunks
-
-def assign_sequence_number(msg_str, seq_number)->str:
-    assert_type(msg_str, str, "message")
-    msg_with_sequence = "[" + str(seq_number) + "]" + msg_str
-    return msg_with_sequence
-
 
 class CovertSender:
     def __init__(self, verbose=False, 
