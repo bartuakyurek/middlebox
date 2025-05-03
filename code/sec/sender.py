@@ -333,7 +333,7 @@ def run_sender(args, **kwargs)->CovertSender:
 
     try:
 
-        prob_cov = 0.3 # Probability of sending covert message
+        prob_cov = args.probcov # Probability of sending covert message
         if random.random() < prob_cov:
             print(f"[INFO] Sending covert message...")
             sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
@@ -366,6 +366,7 @@ def get_args():
     default_window_size = 5
     default_max_transmissions = 1
     default_timeout = 0.5   # seconds
+    default_covert_prob = 1
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
@@ -377,8 +378,10 @@ def get_args():
     parser.add_argument("-w", "--window", help=f"sliding window size, default {default_window_size}", type=int, default=default_window_size, required=False)
     parser.add_argument("-r", "--trans", help=f"maximum number of transmissions of the same packet, 1 to send packets only once, default {default_max_transmissions}", type=int, default=default_max_transmissions, required=False)
     parser.add_argument("-t", "--timeout", help=f"timeout in seconds, default {default_timeout}", type=float, default=default_timeout, required=False)
+    parser.add_argument("-p", "--probcov", help=f"probability of sending covert message between [0,1], default {default_covert_prob}", type=float, default=default_covert_prob, required=False)
 
     args = parser.parse_args()
+    assert args.probcov >= 0 and args.probcov <= 1, f"Expected probability to be in range [0,1]. Got {args.probcov}."
     return args
 
 # ------------------------------------------------------------------------------------------------
