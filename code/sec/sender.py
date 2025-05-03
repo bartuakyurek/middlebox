@@ -349,7 +349,7 @@ def run_sender(args, **kwargs)->CovertSender:
 def get_args():
     # Create a parser and set default values
     #  return the parsed arguments
-    default_carrier_msg = "Hello, this is a long message. " * 200 # WARNING : Carrier must be much longer than covert message for now.
+    default_carrier_msg = "Hello, this is a long message. " * 90 # WARNING : Carrier must be much longer than covert message for now.
     default_covert_msg =  "Covert."*3 #"This is a covert message."
     default_udp_payload = 20 # 1458 for a typical 1500 MTU Ethernet network but I use smaller for sending more packets.
     default_sender_wait = 1 # seconds before stopping ACK daemon
