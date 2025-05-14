@@ -240,10 +240,15 @@ class CovertSender:
                 "[DEBUG] total received ACKs:", self.count_successful_transmissions())
 
     def send_preamble(self, carrier_msg, wait_time=1):
-        covert_msg = self.PREAMBLE
-        self.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=wait_time) 
+        covert_bitstream = self.PREAMBLE
+        self.process_and_send_msg(carrier_msg, 
+                                  covert_msg=covert_bitstream, 
+                                  covert_bitstream = True,
+                                  wait_time=wait_time) 
 
-    def process_and_send_msg(self, message, covert_msg="", wait_time=1):
+    def process_and_send_msg(self, message, covert_msg="", wait_time=1, covert_bitstream=False):
+        # Set covert_bitstream=True if covert message itself is given as a string of bits
+        # otherwise it is assumed covert message is a string of chars 
         # Sends a legitimate message 
         # The given message is split into chunks of size max_payload
         # and sent over UDP with the covert bits embedded in the checksum field.
@@ -261,7 +266,10 @@ class CovertSender:
         # Add sequence number to each chunk
         msg_str_list = [assign_sequence_number(chunk.decode(), i) for i, chunk in enumerate(encoded_msg_chunks)]
         
-        self.covert_bits_str = self._get_covert_bitstream(covert_msg, self.HEADER_LEN)
+        if covert_bitstream:
+            self.covert_bits_str = covert_msg
+        else:
+            self.covert_bits_str = self._get_covert_bitstream(covert_msg, self.HEADER_LEN)
         
         # Add preamble
         #print("Before preamble: ", self.covert_bits_str)
