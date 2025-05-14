@@ -21,9 +21,12 @@ class CovertReceiver:
         self.dest_port = dest_port
         self.sock = self.create_and_bind_socket(port)
         
+        self.HEADER_LEN = 8 # Number of covert bytes, Must the same with CovertSender's TODO: share this variable across containers
+        self.BITS_PER_COVERT_CHAR = 8 
 
-        self.HEADER_LEN = 8 # This must the same with CovertSender's TODO: share this variable across containers
-        self.covert_bits = {} # Store in a dictionary because number of bits is unknown
+        self.covert_bits_chunk = {} 
+        self.covert_chunk_len = 0 # To be determined by <HEADER_LEN>-bit header
+
 
     def create_and_bind_socket(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -33,18 +36,40 @@ class CovertReceiver:
         if self.verbose: print(f"UDP listener started on port {port}")
         return sock
 
+    def reset_data(self):
+        # To reset aggregated chunks in between
+        self.covert_bits_chunk = {}
+
     def shutdown(self):
         self.sock.close()
         if self.verbose: print("[INFO] Socket closed.")
 
+    def _get_covert_len_from_header(self):
+        if len(self.covert_bits_chunk.items()) < self.HEADER_LEN:
+            return False
+        
+        # Extract bits in correct order (from index 0 to HEADER_LEN - 1)
+        sorted_covert_array = sorted(self.covert_bits_chunk)
+        header_bits = [self.covert_bits_chunk[sorted_covert_array[i]] for i in range(self.HEADER_LEN)]
+        if self.verbose: print("[DEBUG] Header bits:", header_bits)
+
+        # Join into a binary string and convert to number
+        bitstring = "".join(header_bits)
+        if self.verbose: print("[DEBUG] Header bitstring:", bitstring)
+        self.covert_chunk_len = int(bitstring, 2) * self.BITS_PER_COVERT_CHAR 
+
+        self.covert_chunk_len += self.HEADER_LEN # Don't forget to include header bits
+        if self.verbose: print(f"[DEBUG] Parsed covert chunk length: {self.covert_chunk_len}")
+        return True
+
     def get_covert_msg(self):
         # First HEADER_LEN bits represent the actual length of covert message
-        if self.covert_bits:
-            bit_str = ''.join(self.covert_bits[i] for i in sorted(self.covert_bits))
+        if self.covert_bits_chunk:
+            bit_str = ''.join(self.covert_bits_chunk[i] for i in sorted(self.covert_bits_chunk))
             
             covert_start = self.HEADER_LEN
             length = int(bit_str[:covert_start], 2) # number of chars in covert message
-            covert_end = covert_start + (length * 8) # 8 bits per char
+            covert_end = covert_start + (length * self.BITS_PER_COVERT_CHAR ) # 8 bits per char
 
             if self.verbose:
                 print("Covert message starts at ", covert_start)
@@ -72,13 +97,10 @@ class CovertReceiver:
     def _save_covert_bit(self, packet, seq_number):
         # Extract covert bit and save it
         covert_bit = '1' if packet[UDP].chksum != 0 else '0' # TODO: is 0 = 0?
-        self.covert_bits[seq_number] = covert_bit
+        self.covert_bits_chunk[seq_number] = covert_bit
         if self.verbose: 
             print(f"[INFO] Covert bit {covert_bit} saved for sequence number {seq_number}")
 
-        # Print coverts received until now (every N steps)
-        if (seq_number + 1) % 8 == 0:
-            print(self.get_covert_msg())
         return True
     
     def _send_ack(self, packet, seq_number):
@@ -98,12 +120,18 @@ class CovertReceiver:
 
         return seq_number
 
+    # Main packet receive logic
     def packet_callback(self, packet):
         if UDP in packet and Raw in packet:
             
             seq_number = self._retrieve_seq_number(packet) # Analyze packet
-            
+
             self._save_covert_bit(packet, seq_number)
+
+            if self._get_covert_len_from_header():
+                if len(self.covert_bits_chunk.items()) >= self.covert_chunk_len:
+                    print(f"[DEBUG] Covert bits {len(self.covert_bits_chunk.items())} >= Expected Length {self.covert_chunk_len}")
+                    print(f"[INFO] Covert of the session: {self.get_covert_msg()}")
 
             self._send_ack(packet, seq_number)
 
