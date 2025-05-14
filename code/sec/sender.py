@@ -408,7 +408,7 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    NUM_RUNS = 1
+    NUM_RUNS = 2
     for i in range(NUM_RUNS):
         print("-"*50)
         start = time.time()

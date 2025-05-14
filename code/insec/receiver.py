@@ -34,6 +34,7 @@ class CovertReceiver:
         self.covert_bits_chunk = {} 
         self.covert_chunk_len = 0 # To be determined by <HEADER_LEN>-bit header
 
+        self.total_covert_msg = []
 
     def create_and_bind_socket(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -171,6 +172,7 @@ class CovertReceiver:
         if self.state == "overt":
             self.state = "covert"
         elif self.state == "covert":
+            self.total_covert_msg.append(self.get_covert_msg()) # Save covert chunk before reset
             self.state = "overt"
         else:
             raise ValueError(f"Unknown state {self.state}")
@@ -228,4 +230,4 @@ if __name__ == "__main__":
         print(f"An error occurred: {e}")
     finally:
         receiver.shutdown()
-        print(f"\nCovert message: {receiver.get_covert_msg()}")
+        print(f"\nCovert message: {receiver.total_covert_msg}")
