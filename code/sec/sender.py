@@ -36,6 +36,8 @@ class CovertSender:
                  window_size=5, timeout=5, max_udp_payload=1458, max_trans=3, 
                  port=9999, dport=8888):        
         
+        self.state = "overt" # overt, covert, preamble
+        self.PREAMBLE = "01010011"
         self.HEADER_LEN = 8       
         self.covert_bits_str = "" # Covert bits to be sent
         self.session_covert_bits_len = 0
@@ -237,6 +239,10 @@ class CovertSender:
             print("[DEBUG] Total packets sent:", self.total_packets_sent,
                 "[DEBUG] total received ACKs:", self.count_successful_transmissions())
 
+    def send_preamble(self, carrier_msg, wait_time=1):
+        covert_msg = self.PREAMBLE
+        self.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=wait_time) 
+
     def process_and_send_msg(self, message, covert_msg="", wait_time=1):
         # Sends a legitimate message 
         # The given message is split into chunks of size max_payload
@@ -257,6 +263,11 @@ class CovertSender:
         
         self.covert_bits_str = self._get_covert_bitstream(covert_msg, self.HEADER_LEN)
         
+        # Add preamble
+        #print("Before preamble: ", self.covert_bits_str)
+        #self.covert_bits_str = self.PREAMBLE + self.covert_bits_str
+        #print("Added preamble: ", self.covert_bits_str)
+
         self.session_covert_bits_len = len(self.covert_bits_str)
         if self.verbose: print(f"[DEBUG] Covert bits string: {self.covert_bits_str}")
         if self.verbose: print(f"[DEBUG] There are {self.session_covert_bits_len} bits to be sent covertly.")
@@ -319,6 +330,10 @@ def run_sender(args, **kwargs)->CovertSender:
         
         if random.random() < prob_cov:
             mode = "covert"
+            
+            print(f"[INFO] Sending preamble first...")
+            sender.send_preamble(carrier_msg=carrier_msg, wait_time=1) # TODO: Why reuse carrier?
+
             print(f"[INFO] Sending covert message...")
             sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
         else:
@@ -360,7 +375,7 @@ def get_args():
     default_window_size = 5
     default_max_transmissions = 1
     default_timeout = 0.5   # seconds
-    default_covert_prob = 1
+    default_covert_prob = 1 # Set 1 to always send covert
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
