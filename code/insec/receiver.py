@@ -94,6 +94,8 @@ class CovertReceiver:
             return
         if self.verbose: print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
 
+        return seq_number
+
     def packet_callback(self, packet):
         if UDP in packet and Raw in packet:
             
