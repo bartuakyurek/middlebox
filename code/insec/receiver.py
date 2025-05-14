@@ -79,19 +79,21 @@ class CovertReceiver:
         # Print coverts received until now (every N steps)
         if (seq_number + 1) % 8 == 0:
             print(self.get_covert_msg())
+        return True
     
     def _send_ack(self, packet, seq_number):
         sender_ip = packet[IP].src
         ack = str(seq_number).encode() 
         sent = self.sock.sendto(ack, (sender_ip, self.dest_port))
         if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
-
+        return True
+    
     def _retrieve_seq_number(self, packet):
         payload = bytes(packet[Raw])
         seq_number = self.extract_sequence_number_from_payload(payload)
         if seq_number == -1:
             print(f"[WARNING] Invalid packet received: {payload}")
-            return
+            return -9999
         if self.verbose: print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
 
         return seq_number
