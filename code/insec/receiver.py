@@ -56,7 +56,7 @@ class CovertReceiver:
             return bits_to_message(bit_str)
         return ""
     
-    def extract_sequence_number(self, payload)->int:
+    def extract_sequence_number_from_payload(self, payload)->int:
         # Sequence number is embedded as '[<seq_number>] '
         # where <seq_number> is an integer
         # Returns -1 if not found
@@ -69,30 +69,41 @@ class CovertReceiver:
             return int(seq_number.decode())
         return -1 
     
+    def _save_covert_bit(self, packet, seq_number):
+        # Extract covert bit and save it
+        covert_bit = '1' if packet[UDP].chksum != 0 else '0' # TODO: is 0 = 0?
+        self.covert_bits[seq_number] = covert_bit
+        if self.verbose: 
+            print(f"[INFO] Covert bit {covert_bit} saved for sequence number {seq_number}")
+
+        # Print coverts received until now (every N steps)
+        if (seq_number + 1) % 8 == 0:
+            print(self.get_covert_msg())
+    
+    def _send_ack(self, packet, seq_number):
+        sender_ip = packet[IP].src
+        ack = str(seq_number).encode() 
+        sent = self.sock.sendto(ack, (sender_ip, self.dest_port))
+        if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
+
+    def _retrieve_seq_number(self, packet):
+        payload = bytes(packet[Raw])
+        seq_number = self.extract_sequence_number_from_payload(payload)
+        if seq_number == -1:
+            print(f"[WARNING] Invalid packet received: {payload}")
+            return
+        if self.verbose: print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
+
     def packet_callback(self, packet):
         if UDP in packet and Raw in packet:
-            # Analyze packet
-            payload = bytes(packet[Raw])
-            seq_number = self.extract_sequence_number(payload)
-            if seq_number == -1:
-                print(f"[WARNING] Invalid packet received: {payload}")
-                return
-            if self.verbose: print(f"[INFO] Received packet with sequence number {seq_number}: {payload}")
             
-            # Extract covert bit and save it
-            covert_bit = '1' if packet[UDP].chksum != 0 else '0' # TODO: is 0 = 0?
-            self.covert_bits[seq_number] = covert_bit
-            if self.verbose: print(f"[INFO] Covert bit {covert_bit} saved for sequence number {seq_number}")
+            seq_number = self._retrieve_seq_number(packet) # Analyze packet
+            
+            self._save_covert_bit(packet, seq_number)
 
-            # Send acknowledgment
-            sender_ip = packet[IP].src
-            ack = str(seq_number).encode() 
-            sent = self.sock.sendto(ack, (sender_ip, self.dest_port))
-            if self.verbose: print(f"[INFO] Sent {sent} bytes (ACK) back to ({sender_ip}, {self.dest_port})")
+            self._send_ack(packet, seq_number)
 
-            # Print coverts received until now (every N steps)
-            if (seq_number + 1) % 8 == 0:
-                print(self.get_covert_msg())
+            
 
     def start_udp_listener(self):
         if self.verbose: print("Receiver is running...")
@@ -101,6 +112,7 @@ class CovertReceiver:
     
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     import argparse
