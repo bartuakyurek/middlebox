@@ -21,6 +21,13 @@ class CovertReceiver:
         self.dest_port = dest_port
         self.sock = self.create_and_bind_socket(port)
         
+        self.state = "overt" # overt, covert
+
+        # Overt state vars
+        self.PREAMBLE = "01010011" # 8-bit TODO: make it an environment variable to share with sender.py?
+        self.received_preamble = {}
+
+        # Covert state vars
         self.HEADER_LEN = 8 # Number of covert bytes, Must the same with CovertSender's TODO: share this variable across containers
         self.BITS_PER_COVERT_CHAR = 8 
 
@@ -39,6 +46,8 @@ class CovertReceiver:
     def reset_data(self):
         # To reset aggregated chunks in between
         self.covert_bits_chunk = {}
+        self.received_preamble = {}
+        if self.verbose: print("[DEBUG] Covert and preamble dictionaries have been reset.")
 
     def shutdown(self):
         self.sock.close()
@@ -94,9 +103,15 @@ class CovertReceiver:
             return int(seq_number.decode())
         return -1 
     
+    def _check_udp_checksum_existence(self, packet):
+        # In this implementation,
+        # existence of UDP checksum field indicates 1 or 0 covert bit
+        covert_bit = '1' if packet[UDP].chksum != 0 else '0' # TODO: is 0 = 0?
+        return covert_bit
+
     def _save_covert_bit(self, packet, seq_number):
         # Extract covert bit and save it
-        covert_bit = '1' if packet[UDP].chksum != 0 else '0' # TODO: is 0 = 0?
+        covert_bit = self._check_udp_checksum_existence(packet)
         self.covert_bits_chunk[seq_number] = covert_bit
         if self.verbose: 
             print(f"[INFO] Covert bit {covert_bit} saved for sequence number {seq_number}")
@@ -120,18 +135,74 @@ class CovertReceiver:
 
         return seq_number
 
+    def _check_all_coverts_received(self):
+        if self._get_covert_len_from_header():
+            if len(self.covert_bits_chunk.items()) >= self.covert_chunk_len:
+                if self.verbose:
+                    print(f"[DEBUG] Covert bits {len(self.covert_bits_chunk.items())} >= Expected Length {self.covert_chunk_len}")
+                print(f"[INFO] Covert of the session: {self.get_covert_msg()}")
+                return True
+        return False
+
+    def _check_preamble(self, packet, seq_number):
+        print("[INFO] Overt state...")
+        covert_bit = self._check_udp_checksum_existence(packet)  # Returns "0" or "1"
+
+        self.received_preamble[seq_number] = covert_bit
+        if self.verbose:
+            print(f"[DEBUG] Covert bit {covert_bit} saved for sequence number {seq_number}")
+
+        # (Naive implementation)
+        # Only check if we have at least preamble length bits
+        if len(self.received_preamble) >= len(self.PREAMBLE):
+            # Sort by sequence number and get the most recent N bits
+            recent_seq = sorted(self.received_preamble.keys())[-len(self.PREAMBLE):]
+            recent_bits = ''.join(self.received_preamble[seq] for seq in recent_seq)
+            if self.verbose:
+                print(f"[DEBUG] Recent bits for preamble check: {recent_bits}")
+
+            if recent_bits == self.PREAMBLE:
+                if self.verbose:
+                    print("[INFO] Preamble matched!")
+                return True
+
+        return False
+
+    def _toggle_state(self):
+        prev_state = self.state
+        if self.state == "overt":
+            self.state = "covert"
+        elif self.state == "covert":
+            self.state = "overt"
+        else:
+            raise ValueError(f"Unknown state {self.state}")
+        
+        print("[INFO] State is toggled to {prev_state} -> {self.state}")
+        self.reset_data()
+        return
+
     # Main packet receive logic
     def packet_callback(self, packet):
         if UDP in packet and Raw in packet:
             
             seq_number = self._retrieve_seq_number(packet) # Analyze packet
 
-            self._save_covert_bit(packet, seq_number)
+            if self.state == "overt":
+                preamble = self._check_preamble(packet, seq_number) # Changes status if covert preamble detected
+                
+                if preamble:
+                    self.state = "covert"
+                    self.reset_data() # Clean preamble and previous covert data
 
-            if self._get_covert_len_from_header():
-                if len(self.covert_bits_chunk.items()) >= self.covert_chunk_len:
-                    print(f"[DEBUG] Covert bits {len(self.covert_bits_chunk.items())} >= Expected Length {self.covert_chunk_len}")
-                    print(f"[INFO] Covert of the session: {self.get_covert_msg()}")
+            elif self.state == "covert":
+                self._save_covert_bit(packet, seq_number)
+                received = self._check_all_coverts_received()
+                
+                if received:
+                    self.state = "overt" 
+                    self.reset_data()
+            else:
+                print(f"[WARNING] Unknown state {self.state}")
 
             self._send_ack(packet, seq_number)
 
