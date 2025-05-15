@@ -161,7 +161,6 @@ class CovertReceiver:
                 print(f"[DEBUG] Recent bits for preamble check: {recent_bits}. Recent seq: {recent_seq}")
 
             if recent_bits == self.PREAMBLE:
-                #if self.verbose:
                 print("[INFO] Preamble detected!")
                 return True
 
@@ -188,12 +187,10 @@ class CovertReceiver:
             seq_number = self._retrieve_seq_number(packet) # Analyze packet
 
             if self.state == "overt":
-                #print("[INFO] Overt state...")
                 preamble = self._check_preamble(packet, seq_number) 
                 if preamble: self._toggle_state()
 
             elif self.state == "covert":
-                #print("[INFO] COVERT STATE")
                 self._save_covert_bit(packet, seq_number)
                 received = self._check_all_coverts_received()
                 if received: self._toggle_state()

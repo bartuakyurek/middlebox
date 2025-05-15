@@ -36,7 +36,7 @@ class CovertSender:
                  window_size=5, timeout=5, max_udp_payload=1458, max_trans=3, 
                  port=9999, dport=8888):        
         
-        self.state = "overt" # overt, covert, preamble
+        self.state = "overt" # overt, covert
         self.PREAMBLE = "01010011"
         self.HEADER_LEN = 8       
         self.covert_bits_str = "" # Covert bits to be sent
@@ -136,14 +136,12 @@ class CovertSender:
                 else:
                      if self.received_acks[seq_num] == -1:
                         self.received_acks[seq_num] = time.time() # Mark dropped packet it as received
-                #    if self.verbose: print(f"[ACK] Duplicate ACK received for sequence number {seq_num}. Ignoring it.")
 
                 while self.window_start in self.received_acks: 
                     self.window_start += 1 # Slide the window
                     if self.verbose: print(f"[SLIDE] Window is slided to {self.window_start}.")
 
             time.sleep(sleep_time) # Sleep to let the other threads acquire the lock more easily
-        #self.stop_event.set() # Tell the sender to stop sending packets
 
     def _timeout_based_retransmissions(self, packet_transmission_count, packet_timers, msg_str_list):
         for idx in range(self.window_start, self.cur_pkt_idx):
@@ -271,11 +269,6 @@ class CovertSender:
         else:
             self.covert_bits_str = self._get_covert_bitstream(covert_msg, self.HEADER_LEN)
         
-        # Add preamble
-        #print("Before preamble: ", self.covert_bits_str)
-        #self.covert_bits_str = self.PREAMBLE + self.covert_bits_str
-        #print("Added preamble: ", self.covert_bits_str)
-
         self.session_covert_bits_len = len(self.covert_bits_str)
         if self.verbose: print(f"[DEBUG] Covert bits string: {self.covert_bits_str}")
         if self.verbose: print(f"[DEBUG] There are {self.session_covert_bits_len} bits to be sent covertly.")
