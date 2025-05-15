@@ -61,7 +61,7 @@ class CovertSender:
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
 
-        self.outgoing_packets = []
+        self.outgoing_pkt_data = []
         if verbose: print("[DEBUG] CovertSender created. Call send() to start sending packets.")
 
     def get_host(self, IP_NAME='INSECURENET_HOST_IP'):
@@ -223,7 +223,8 @@ class CovertSender:
                 "length": len(message),
                 "is_covert": 1 if self.state=="covert" else 0  # ground truth
                 }
-            self.outgoing_packets.append(pkt_dict)
+            
+            self.outgoing_pkt_data.append(pkt_dict)
         return pkt
             
     def _get_covert_bitstream(self, covert_msg_str, header_len)->str:
@@ -347,7 +348,8 @@ def run_sender(args, **kwargs)->CovertSender:
         
         if random.random() < prob_cov:
             mode = "covert"
-            
+            sender.state = mode
+
             print(f"[INFO] Sending preamble first...")
             sender.send_preamble(carrier_msg=carrier_msg, wait_time=1) # TODO: Why reuse carrier?
 
@@ -355,6 +357,8 @@ def run_sender(args, **kwargs)->CovertSender:
             sender.process_and_send_msg(carrier_msg, covert_msg=covert_msg, wait_time=args.senderwait) 
         else:
             mode = "overt"
+            sender.state = mode
+
             num_dummy_chars = random.randint(1,10) 
             dummy_covert = random_string(num_dummy_chars) 
 
@@ -363,13 +367,17 @@ def run_sender(args, **kwargs)->CovertSender:
             
 
         save_session_csv(
-                        sender,
-                        session_id=0, # ignored if filename is given
                         filename="covert_sessions.csv",
-                        covert_msg=covert_msg,
-                        overt_msg=carrier_msg,
-                        mode=mode  # "covert" or "overt"
+                        outgoing_packets=sender.outgoing_pkt_data
                         )
+        
+        # To test dataset creation utils without re-running sender.py
+        save_cache=True
+        if save_cache:
+            import pickle
+            with open("outgoing_packets.pkl", "wb") as f:
+                pickle.dump(sender.outgoing_pkt_data, f)
+
 
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
@@ -393,7 +401,7 @@ def get_args():
     default_window_size = 5
     default_max_transmissions = 1
     default_timeout = 0.5   # seconds
-    default_covert_prob = 1 # Set 1 to always send covert
+    default_covert_prob = 0.8 # Set 1 to always send covert
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
@@ -418,7 +426,7 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    NUM_RUNS = 2
+    NUM_RUNS = 10
     for i in range(NUM_RUNS):
         print("-"*50)
         start = time.time()
