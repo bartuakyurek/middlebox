@@ -6,21 +6,18 @@ import random
 import string
 
 def save_session_csv(
-    sender,
-    session_id,
-    covert_msg,
-    overt_msg,
-    mode="covert", 
-    filename=None
+    session_id=0,
+    filename=None,
+    outgoing_packets=None,
 ):
     if filename is None:
         filename = f"covert_session_{session_id}.csv"
 
     fieldnames = [
-        "seq_num",
-        "delta_t",
+        "timestamp",
         "checksum",
         "payload",
+        "length",
         "is_covert"
     ]
 
@@ -33,19 +30,9 @@ def save_session_csv(
         if not file_exists:
             writer.writeheader()
 
-        """for seq in range(sender.session_covert_bits_len):
-            packet = sender.outgoing_packets.get(seq)
-            if not packet:
-                continue
-
-            writer.writerow({
-                "seq_num": seq,
-                "mode": mode,
-                "covert_bit": sender.covert_bits_str[seq],
-                "checksum": packet["checksum"],
-                "timestamp_ack": sender.received_acks.get(seq, None)
-            })
-        """
+        for pkt_dict in outgoing_packets:
+            writer.writerow(pkt_dict)
+    
     print(f"[INFO] CSV log appended to {filename}")
 
 
@@ -73,3 +60,19 @@ def assign_sequence_number(msg_str, seq_number)->str:
     assert_type(msg_str, str, "message")
     msg_with_sequence = "[" + str(seq_number) + "]" + msg_str
     return msg_with_sequence
+
+
+
+if __name__ == '__main__':
+    import pickle
+
+    # Test packet dataset saving
+    with open("outgoing_packets.pkl", "rb") as f:
+        outgoing_packets = pickle.load(f)
+
+    save_session_csv(
+                        session_id=0, # ignored if filename is given
+                        filename="covert_sessions.csv",
+                        outgoing_packets=outgoing_packets
+                        )
+        
