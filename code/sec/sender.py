@@ -61,6 +61,7 @@ class CovertSender:
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
 
+        self.outgoing_packets = []
         if verbose: print("[DEBUG] CovertSender created. Call send() to start sending packets.")
 
     def get_host(self, IP_NAME='INSECURENET_HOST_IP'):
@@ -192,7 +193,7 @@ class CovertSender:
         for t in threads:
             t.join()  # Optional: Wait for all threads to finish
 
-    def _send_packet_with_covert(self, message, cov_bit=None):
+    def _send_packet_with_covert(self, message, cov_bit=None, save_pkt=True):
         # Send packet using UDP with ACK
         # Returns 0 if message sent successfully
         # -1 if it cannot be delivered in max_resend trials.
@@ -209,6 +210,21 @@ class CovertSender:
         pkt = ip/udp/Raw(load=message)
         send(pkt, verbose=False)
         if self.verbose: print(f"[DEBUG] Message sent to {self.recv_ip}:{self.dport}")
+
+        # Save packet cache for dataset creation
+        if save_pkt:
+            tmp_pkt = IP(bytes(pkt))
+            chksum =  tmp_pkt[UDP].chksum
+            if cov_bit == '0': assert chksum == 0, "[UNEXPECTED ERROR] Checksum must be 0"
+            pkt_dict = {
+                "timestamp": time.time(),
+                "checksum": chksum,
+                "payload": message.decode(errors="replace") if isinstance(message, bytes) else str(message),
+                "length": len(message),
+                "is_covert": 1 if self.state=="covert" else 0  # ground truth
+                }
+            self.outgoing_packets.append(pkt_dict)
+        return pkt
             
     def _get_covert_bitstream(self, covert_msg_str, header_len)->str:
         # Given a covert message string and number of bits 
@@ -348,7 +364,8 @@ def run_sender(args, **kwargs)->CovertSender:
 
         save_session_csv(
                         sender,
-                        session_id=0,
+                        session_id=0, # ignored if filename is given
+                        filename="covert_sessions.csv",
                         covert_msg=covert_msg,
                         overt_msg=carrier_msg,
                         mode=mode  # "covert" or "overt"
