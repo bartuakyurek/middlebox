@@ -18,12 +18,10 @@ def save_session_csv(
 
     fieldnames = [
         "seq_num",
-        "mode",
-        "covert_bit",
-        "acknowledged",
-        "overt_payload",
+        "delta_t",
         "checksum",
-        "timestamp_ack"
+        "payload",
+        "is_covert"
     ]
 
     file_exists = os.path.isfile(filename)
