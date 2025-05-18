@@ -365,9 +365,10 @@ def run_sender(args, **kwargs)->CovertSender:
             print(f"[INFO] Sending overt-only message with dummy covert: {dummy_covert}")
             sender.process_and_send_msg(carrier_msg, dummy_covert, wait_time=args.senderwait) 
             
-
+        data_folder_path = os.environ.get("DATA_PATH")
+        filename = os.path.join(data_folder_path, "covert_sessions.csv")
         save_session_csv(
-                        filename="covert_sessions.csv",
+                        filename=filename,
                         outgoing_packets=sender.outgoing_pkt_data
                         )
         
