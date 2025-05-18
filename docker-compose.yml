@@ -13,6 +13,7 @@ services:
     volumes:
     - ./config:/config
     - ./code/sec:/code/sec
+    - ./shared-data:/shared-data
     environment:
     - SECURE_NET=${SECURE_NET}
     - SECURENET_GATEWAY=${SECURENET_GATEWAY}
@@ -20,6 +21,7 @@ services:
     - INSECURENET_GATEWAY=${INSECURENET_GATEWAY}
     - SECURENET_HOST_IP=${SECURENET_HOST_IP}
     - INSECURENET_HOST_IP=${INSECURENET_HOST_IP}
+    - DATA_PATH=../../shared-data
     privileged: true
     cap_add:
     - NET_ADMIN
@@ -104,6 +106,7 @@ services:
     volumes:
     - ./config:/config
     - ./code/udp-checksum-processor:/code/udp-checksum-processor
+    - ./shared-data:/shared-data
     environment:
     - SECURE_NET=${SECURE_NET}
     - SECURENET_GATEWAY=${SECURENET_GATEWAY}
@@ -112,7 +115,7 @@ services:
     - SECURENET_HOST_IP=${SECURENET_HOST_IP}
     - INSECURENET_HOST_IP=${INSECURENET_HOST_IP}
     - NATS_SURVEYOR_SERVERS=${NATS_SURVEYOR_SERVERS}
-    
+    - DATA_PATH=../../shared-data
   insec:
     build: ./dockers/insec
     init: true
@@ -122,6 +125,7 @@ services:
     volumes:
     - ./config:/config
     - ./code/insec:/code/insec
+    - ./shared-data:/shared-data
     networks:
       exnet:
         ipv4_address: ${INSECURENET_HOST_IP}
@@ -132,6 +136,7 @@ services:
     - INSECURENET_GATEWAY=${INSECURENET_GATEWAY}
     - SECURENET_HOST_IP=${SECURENET_HOST_IP}
     - INSECURENET_HOST_IP=${INSECURENET_HOST_IP}
+    - DATA_PATH=../../shared-data
     privileged: true
     cap_add:
     - NET_ADMIN
