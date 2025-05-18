@@ -372,14 +372,6 @@ def run_sender(args, **kwargs)->CovertSender:
                         outgoing_packets=sender.outgoing_pkt_data
                         )
         
-        # To test dataset creation utils without re-running sender.py
-        save_cache=True
-        if save_cache:
-            import pickle
-            with open("outgoing_packets.pkl", "wb") as f:
-                pickle.dump(sender.outgoing_pkt_data, f)
-
-
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
     finally:
