@@ -17,6 +17,7 @@ E.g. to send 3 bits of covert message, and fixed header is 8 bits, send: 0000 00
 
 import os
 import time
+import uuid
 import random
 import socket
 import argparse
@@ -365,13 +366,16 @@ def run_sender(args, **kwargs)->CovertSender:
             print(f"[INFO] Sending overt-only message with dummy covert: {dummy_covert}")
             sender.process_and_send_msg(carrier_msg, dummy_covert, wait_time=args.senderwait) 
             
-        data_folder_path = os.environ.get("DATA_PATH")
-        filename = "covert_sessions.csv"
-        filepath = os.path.join(data_folder_path, filename)
+        
+        params = {
+                    "window_size": args.window_size,
+                    "timeout": args.timeout,
+                    "trans": args.trans,
+                }
         save_session(
-                        filename=filepath,
+                        params=params,
                         outgoing_packets=sender.outgoing_pkt_data
-                        )
+                    )
         
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
