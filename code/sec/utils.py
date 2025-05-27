@@ -4,6 +4,7 @@
 import os
 import csv
 import uuid
+import json
 import random
 import string
 
@@ -17,16 +18,27 @@ def _get_unique_filepath(base_name="", filetype="csv",  seperator="", length=8, 
     return filename
 
 
+def _get_metadata(json_path):
+    # Check if .json exists
+    # If true, load it
+    # Else, return empty dictionary
+    # Return a dictionary of metadata
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            metadata = json.load(f)
+    else:
+        metadata = {}
+    return metadata
 
 def save_session(
     params,
     outgoing_packets=None,
+    metadata_filename="dataset_metadata.json"
 ):
     data_folder_path = os.environ.get("DATA_PATH")
+    metadata_path = os.path.join(data_folder_path, metadata_filename)
 
-    # Check if .json exists
-
-    # Else, create .json
+    metadata = _get_metadata(json_path=metadata_path)
 
     # Check if .json contains the params
     # If True, read filename 
