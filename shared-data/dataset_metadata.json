@@ -1,0 +1,10 @@
+{
+    "cd7c681a4fc50e20c3a5bfa4c602bec6": {
+        "params": {
+            "window_size": 5,
+            "timeout": 0.5,
+            "trans": 1
+        },
+        "filename": "../../shared-data/covert_sessions_b710c942.csv"
+    }
+}
