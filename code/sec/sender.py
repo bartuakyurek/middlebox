@@ -17,7 +17,6 @@ E.g. to send 3 bits of covert message, and fixed header is 8 bits, send: 0000 00
 
 import os
 import time
-import uuid
 import random
 import socket
 import argparse
@@ -368,9 +367,9 @@ def run_sender(args, **kwargs)->CovertSender:
             
         
         params = {
-                    "window_size": args.window_size,
-                    "timeout": args.timeout,
-                    "trans": args.trans,
+                    "window_size": window,
+                    "timeout": timeout,
+                    "trans": trans,
                 }
         save_session(
                         params=params,
