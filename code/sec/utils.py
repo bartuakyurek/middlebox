@@ -1,29 +1,49 @@
 
+
+
 import os
 import csv
-
+import uuid
 import random
 import string
 
 
+def _get_unique_filepath(base_name="", filetype="csv",  seperator="", length=8, rootpath=None):
+    session_id = str(uuid.uuid4())[:8]  # Shorten 
+    filename = f"{base_name}{seperator}{session_id}.csv"
+
+    if rootpath:
+        return os.path.join(rootpath, filename)
+    return filename
+
+
+
 def save_session(
-    session_id=0,
-    filename=None,
+    params,
     outgoing_packets=None,
 ):
-    save_session_csv(session_id=session_id,
-                     filename=filename,
+    data_folder_path = os.environ.get("DATA_PATH")
+
+    # Check if .json exists
+
+    # Else, create .json
+
+    # Check if .json contains the params
+    # If True, read filename 
+    # Else, create a unique csv path
+    csv_path = _get_unique_filepath("covert_sessions", filetype="csv", seperator="_", rootpath=data_folder_path)
+    # and add params and filename to .json
+        
+    save_session_csv(
+                     filepath=csv_path,
                      outgoing_packets=outgoing_packets)
 
 
 def save_session_csv(
-    session_id=0,
-    filename=None,
+    filepath=None,
     outgoing_packets=None,
 ):
-    if filename is None:
-        filename = f"covert_session_{session_id}.csv"
-
+    
     fieldnames = [
         "timestamp",
         "checksum",
@@ -32,9 +52,9 @@ def save_session_csv(
         "is_covert"
     ]
 
-    file_exists = os.path.isfile(filename)
+    file_exists = os.path.isfile(filepath)
 
-    with open(filename, mode="a", newline="") as csvfile:
+    with open(filepath, mode="a", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         # Only write the header if the file didn't exist before
@@ -44,7 +64,7 @@ def save_session_csv(
         for pkt_dict in outgoing_packets:
             writer.writerow(pkt_dict)
     
-    print(f"[INFO] CSV log appended to {filename}")
+    print(f"[INFO] CSV log appended to {filepath}")
 
 
 
