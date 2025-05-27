@@ -44,16 +44,21 @@ def _save_metadata(params, metadata, metadata_path, rootpath=""):
     param_hash = _hash_params(params)
 
     # Check if .json contains the params
+    csv_path = "error_path"
+
     if param_hash in metadata:
         csv_path = metadata[param_hash]["filename"] # Read csv_path from metadata
         print(f"[INFO] Found existing file for identical params: {csv_path}")
-    else: # Create a unique csv path, add it to metadata
+
+    else: 
+        # Create a unique csv path, add it to metadata
+        csv_path = _get_unique_filepath("covert_sessions", filetype="csv", seperator="_", rootpath=rootpath)
+
         metadata[param_hash] = {
             "params": params,
             "filename": csv_path,
         }
-        csv_path = _get_unique_filepath("covert_sessions", filetype="csv", seperator="_", rootpath=rootpath)
-        _dump_metadata(metadata=metadata, data_folder_path=rootpath, metadata_path=metadata_path)
+        _dump_metadata(metadata=metadata, metadata_path=metadata_path)
 
     return csv_path
 
@@ -69,6 +74,7 @@ def save_session(
     metadata = _get_metadata(json_path=metadata_path)
     csv_path = _save_metadata(params=params, metadata_path=metadata_path, metadata=metadata, rootpath=rootpath)
 
+    print(f"[INFO] Saving session to {csv_path}")
     save_session_csv(
                      filepath=csv_path,
                      outgoing_packets=outgoing_packets)
