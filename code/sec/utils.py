@@ -5,6 +5,17 @@ import csv
 import random
 import string
 
+
+def save_session(
+    session_id=0,
+    filename=None,
+    outgoing_packets=None,
+):
+    save_session_csv(session_id=session_id,
+                     filename=filename,
+                     outgoing_packets=outgoing_packets)
+
+
 def save_session_csv(
     session_id=0,
     filename=None,
@@ -34,6 +45,8 @@ def save_session_csv(
             writer.writerow(pkt_dict)
     
     print(f"[INFO] CSV log appended to {filename}")
+
+
 
 
 
@@ -70,7 +83,7 @@ if __name__ == '__main__':
     with open("outgoing_packets.pkl", "rb") as f:
         outgoing_packets = pickle.load(f)
 
-    save_session_csv(
+    save_session(
                         session_id=0, # ignored if filename is given
                         filename="covert_sessions.csv",
                         outgoing_packets=outgoing_packets

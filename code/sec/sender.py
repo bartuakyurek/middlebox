@@ -29,7 +29,7 @@ from utils import random_string
 from utils import message_to_bits
 from utils import assign_sequence_number
 from utils import split_message_into_chunks
-from utils import save_session_csv
+from utils import save_session
 
 class CovertSender:
     def __init__(self, verbose=False, 
@@ -366,9 +366,10 @@ def run_sender(args, **kwargs)->CovertSender:
             sender.process_and_send_msg(carrier_msg, dummy_covert, wait_time=args.senderwait) 
             
         data_folder_path = os.environ.get("DATA_PATH")
-        filename = os.path.join(data_folder_path, "covert_sessions.csv")
-        save_session_csv(
-                        filename=filename,
+        filename = "covert_sessions.csv"
+        filepath = os.path.join(data_folder_path, filename)
+        save_session(
+                        filename=filepath,
                         outgoing_packets=sender.outgoing_pkt_data
                         )
         
@@ -419,7 +420,7 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    NUM_RUNS = 10
+    NUM_RUNS = 1
     for i in range(NUM_RUNS):
         print("-"*50)
         start = time.time()
