@@ -7,7 +7,7 @@ import uuid
 import json
 import random
 import string
-
+import hashlib
 
 def _get_unique_filepath(base_name="", filetype="csv",  seperator="", length=8, rootpath=None):
     session_id = str(uuid.uuid4())[:8]  # Shorten 
@@ -17,6 +17,10 @@ def _get_unique_filepath(base_name="", filetype="csv",  seperator="", length=8, 
         return os.path.join(rootpath, filename)
     return filename
 
+def _hash_params(params):
+    # Deterministically hash sorted params to identify duplicates
+    param_str = json.dumps(params, sort_keys=True)
+    return hashlib.md5(param_str.encode()).hexdigest()
 
 def _get_metadata(json_path):
     # Check if .json exists
@@ -30,26 +34,45 @@ def _get_metadata(json_path):
         metadata = {}
     return metadata
 
+def _dump_metadata(metadata, metadata_path):
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=4)
+    print(f"[INFO] New session saved. Metadata updated: {metadata_path}")
+
+def _save_metadata(params, metadata, metadata_path, rootpath=""):
+    # Returns the associated csv dataset path with given params
+    param_hash = _hash_params(params)
+
+    # Check if .json contains the params
+    if param_hash in metadata:
+        csv_path = metadata[param_hash]["filename"] # Read csv_path from metadata
+        print(f"[INFO] Found existing file for identical params: {csv_path}")
+    else: # Create a unique csv path, add it to metadata
+        metadata[param_hash] = {
+            "params": params,
+            "filename": csv_path,
+        }
+        csv_path = _get_unique_filepath("covert_sessions", filetype="csv", seperator="_", rootpath=rootpath)
+        _dump_metadata(metadata=metadata, data_folder_path=rootpath, metadata_path=metadata_path)
+
+    return csv_path
+
 def save_session(
     params,
     outgoing_packets=None,
     metadata_filename="dataset_metadata.json"
 ):
-    data_folder_path = os.environ.get("DATA_PATH")
-    metadata_path = os.path.join(data_folder_path, metadata_filename)
+    rootpath = os.environ.get("DATA_PATH")
+    metadata_path = os.path.join(rootpath, metadata_filename)
 
+    # Retrieve metadata from path, if not exist, create it 
     metadata = _get_metadata(json_path=metadata_path)
+    csv_path = _save_metadata(params=params, metadata_path=metadata_path, metadata=metadata, rootpath=rootpath)
 
-    # Check if .json contains the params
-    # If True, read filename 
-    # Else, create a unique csv path
-    csv_path = _get_unique_filepath("covert_sessions", filetype="csv", seperator="_", rootpath=data_folder_path)
-    # and add params and filename to .json
-        
     save_session_csv(
                      filepath=csv_path,
                      outgoing_packets=outgoing_packets)
-
+    return
 
 def save_session_csv(
     filepath=None,
