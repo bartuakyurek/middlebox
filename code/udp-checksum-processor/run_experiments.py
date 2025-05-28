@@ -109,8 +109,8 @@ def plot_phase3_experiments(free_parameter_name,
 
 
 def get_experimental_parameters(default_params_dict, 
-                           free_param_str = "window_size",
-                           free_param_values = [1, 2, 4, 8, 16, 32]):
+                           free_param_str,
+                           free_param_values):
     params_dicts = []
     for free_param_val in free_param_values:
 
@@ -158,19 +158,24 @@ if __name__ == '__main__':
                       "timeout": 0.5, 
                       "trans" : 1} # WARNING: Should be the same as default in sender.py
     
-    selected_experiment_idx = 0
-    experiments = [("window_size", [1, 2, 4, 8, 16, 32])] # Array of tuples (free_param, val)
+    experiments = [("window_size", [1, 2, 4, 8, 16, 32]),
+                   ("timeout", [0.01, 0.2, 1.0, 5.0]), 
+                   ("trans", [1, 2, 3, 4, 5] )] # Array of tuples (free_param, val)
 
-    free_param_name, free_param_values =  experiments[selected_experiment_idx]
-    param_dicts = get_experimental_parameters(default_params_dict=default_params, free_param_str=free_param_name, free_param_values=free_param_values)
-    
-    # Run experiments
-    run_phase3_experiments(metadata_path=metadata_path, param_dicts=param_dicts)
+    selected_experiments = [0, 1, 2] # indices of experiments list above
 
-    # Plot experiments
-    free_param_name = "window_size"
-    metric_name = "accuracy"
-    plot_phase3_experiments(free_parameter_name=free_param_name, 
-                            param_dicts=param_dicts, 
-                            metric_name=metric_name)
-    
+    # Run selected experiments
+    for selected_experiment_idx in selected_experiments:
+        free_param_name, free_param_values =  experiments[selected_experiment_idx]
+        print("[INFO] Running experiments for parameter ", free_param_name, " with values ", free_param_values)
+        param_dicts = get_experimental_parameters(default_params_dict=default_params, free_param_str=free_param_name, free_param_values=free_param_values)
+        
+        # Run particular experiment
+        run_phase3_experiments(metadata_path=metadata_path, param_dicts=param_dicts)
+
+        # Plot experiments
+        metric_name = "accuracy"
+        plot_phase3_experiments(free_parameter_name=free_param_name, 
+                                param_dicts=param_dicts, 
+                                metric_name=metric_name)
+        
