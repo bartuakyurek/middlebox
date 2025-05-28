@@ -2,6 +2,7 @@
 
 
 import os 
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -79,27 +80,52 @@ def _remove_previous_results(metadata_path, param_key, result_key_str):
     _dump_metadata(metadata=metadata, metadata_path=metadata_path)
 
 
-def plot_phase3_experiments():
-    pass
+def plot_phase3_experiments(free_parameter_name, 
+                            param_dicts,
+                            metric_name = "accuracy",
+                            ):
+    figure_path = f"{free_parameter_name}_vs_{metric_name}.png"
+    x = []
+    y_lists = []
+    for params in param_dicts:
+        x.append(params[free_parameter_name])
+        param_hash = _hash_params(params)
+        metric_values = get_metric_from_json(json_path=metadata_path, param_key=param_hash, metric_key_str=metric_name)
+        y_lists.append(metric_values
+                       )
+    # Plot 
+    means = [np.mean(vals) for vals in y_lists]
+    stds = [np.std(vals, ddof=1) for vals in y_lists]
+    conf_intervals = [1.96 * (std / np.sqrt(len(vals))) for std, vals in zip(stds, y_lists)]
+    plt.figure(figsize=(8, 5))
+    plt.errorbar(x, means, yerr=conf_intervals, fmt='o-', color='teal', ecolor='lightgray', capsize=5)
+    plt.xlabel(f"{free_parameter_name}")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy with 95% Confidence Intervals")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(figure_path)
+    print(f"[INFO] Plot saved to {figure_path}")
 
-def run_phase3_experiments(metadata_path, clean_previous=False, plot_results=True):
+
+def get_experimental_parameters(default_params_dict, 
+                           free_param_str = "window_size",
+                           free_param_values = [1, 2, 4, 8, 16, 32]):
+    params_dicts = []
+    for free_param_val in free_param_values:
+
+        params = copy.deepcopy(default_params_dict)
+        params[free_param_str] = free_param_val
+        params_dicts.append(params)
+    return params_dicts
+
+def run_phase3_experiments(metadata_path, 
+                           param_dicts,
+                           clean_previous=True,
+                           NUM_TRIALS =  5 # For confidence intervals, run the same experiment
+                           ):
     
-    NUM_TRIALS =  0 # For confidence intervals, run the same experiment
-
-    # Free parameter
-    free_parameter_name = "window_size"
-    free_param_values = window_sizes = [1, 2, 4, 8, 16, 32]
-
-    # Fixed parameters (from default args)
-    timeout = 0.5
-    trans = 1
-
-    for window in window_sizes:
-        params = {
-                    "window_size": window,
-                    "timeout": timeout,
-                    "trans": trans,
-                }
+    for params in param_dicts:
         data_csv_path, param_hash = _get_associated_csv(metadata_path=metadata_path, params=params)
 
         if clean_previous:
@@ -120,47 +146,28 @@ def run_phase3_experiments(metadata_path, clean_previous=False, plot_results=Tru
                                     param_key=param_hash,
                                     result_key_str=res_str,
                                     result_value=val)
-        
-    if plot_results:
-        metric_name = "accuracy"
-        x = free_param_values
-        y_lists = []
-        for window in window_sizes:
-            params = {
-                    "window_size": window,
-                    "timeout": timeout,
-                    "trans": trans,
-            }
-            param_hash = _hash_params(params)
-            metric_values = get_metric_from_json(json_path=metadata_path, param_key=param_hash, metric_key_str=metric_name)
-            y_lists.append(metric_values
-                           )
-        # Plot 
-        figure_path = "metric_plot.png"
-
-        means = [np.mean(vals) for vals in y_lists]
-        stds = [np.std(vals, ddof=1) for vals in y_lists]
-        conf_intervals = [1.96 * (std / np.sqrt(len(vals))) for std, vals in zip(stds, y_lists)]
-
-        plt.figure(figsize=(8, 5))
-        plt.errorbar(x, means, yerr=conf_intervals, fmt='o-', color='teal', ecolor='lightgray', capsize=5)
-        plt.xlabel(f"{free_parameter_name}")
-        plt.ylabel("Accuracy")
-        plt.title("Accuracy with 95% Confidence Intervals")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(figure_path)
-        print(f"[INFO] Plot saved to {figure_path}")
-
-#def plot_experiments(metadata_path, result_key="accuracy"):
-    
-        
 
 if __name__ == '__main__':
-
+    # Setup data paths
     rootpath = os.environ.get("DATA_PATH")
     metadata_filename="dataset_metadata.json"
     metadata_path = os.path.join(rootpath, metadata_filename)
-    run_phase3_experiments(metadata_path=metadata_path)
+    
+    # Setup variables to experiment
+    default_params = {"window_size" : 5,
+                      "timeout": 0.5, 
+                      "trans" : 1} # WARNING: Should be the same as default in sender.py
+    free_param_name = "window_size"
+    free_param_values =  [1, 2, 4, 8, 16, 32]
+    param_dicts = get_experimental_parameters(default_params_dict=default_params, free_param_str=free_param_name, free_param_values=free_param_values)
+    
+    # Run experiments
+    run_phase3_experiments(metadata_path=metadata_path, param_dicts=param_dicts)
 
+    # Plot experiments
+    free_param_name = "window_size"
+    metric_name = "accuracy"
+    plot_phase3_experiments(free_parameter_name=free_param_name, 
+                            param_dicts=param_dicts, 
+                            metric_name=metric_name)
     
