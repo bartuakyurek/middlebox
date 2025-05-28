@@ -182,13 +182,14 @@ def run_experiments(args):
 
     # Parameters of experimental campaign
     # ------------------------------------------------------------
-    num_trials=4 # Number of runs for each identical configuration
+    num_trials=5 # Number of runs for each identical configuration
 
     # Test for a small message for now (WARNING: Set carrier length at least x16 more than covert message)
     CARRIER_MESSAGE = "Hello, this is a test message. " * 500
-    COVERT_MESSAGE = "Cov" * 1
+    COVERT_MESSAGE = "Covert." * 6
 
     # Parameters to test
+    args.probcov = 0.8 # Force only covert if set to 1.0
     window_sizes = [1, 2, 4, 8, 16, 32]
     timeout_values = [0.01, 0.2, 1.0, 5.0]
     max_allowed_transmissions = [1, 2, 3, 4, 5] 
@@ -205,5 +206,6 @@ if __name__ == "__main__":
     print("[NOTE] If you want to run a specific experiment, use sender.py instead.")
 
     default_args = get_args()
+    
     run_experiments(default_args)
 
