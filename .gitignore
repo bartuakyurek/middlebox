@@ -17,3 +17,4 @@
 ./code/mitm/switch.o
 
 *.DS_Store
+*.png
