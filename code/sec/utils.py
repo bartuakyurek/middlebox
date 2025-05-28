@@ -135,18 +135,3 @@ def assign_sequence_number(msg_str, seq_number)->str:
     msg_with_sequence = "[" + str(seq_number) + "]" + msg_str
     return msg_with_sequence
 
-
-
-if __name__ == '__main__':
-    import pickle
-
-    # Test packet dataset saving
-    with open("outgoing_packets.pkl", "rb") as f:
-        outgoing_packets = pickle.load(f)
-
-    save_session(
-                        session_id=0, # ignored if filename is given
-                        filename="covert_sessions.csv",
-                        outgoing_packets=outgoing_packets
-                        )
-        
