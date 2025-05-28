@@ -5,7 +5,14 @@
             "timeout": 0.5,
             "trans": 1
         },
-        "filename": "../../shared-data/covert_sessions_b710c942.csv"
+        "filename": "../../shared-data/covert_sessions_b710c942.csv",
+        "accuracy": [
+            0.9608759842519685,
+            0.9574311023622047,
+            0.9653051181102362,
+            0.9554625984251969,
+            0.9576771653543307
+        ]
     },
     "4c92ffbf4cbd4ad97b63c29066b8835c": {
         "params": {
@@ -29,7 +36,14 @@
             "timeout": 0.5,
             "trans": 1
         },
-        "filename": "../../shared-data/covert_sessions_b1535c72.csv"
+        "filename": "../../shared-data/covert_sessions_b1535c72.csv",
+        "accuracy": [
+            0.9556737588652482,
+            0.956855791962175,
+            0.9598108747044918,
+            0.9598108747044918,
+            0.9533096926713948
+        ]
     },
     "89c14a6b0d54315079ba6dd17c8a2cf7": {
         "params": {
@@ -37,7 +51,14 @@
             "timeout": 0.5,
             "trans": 1
         },
-        "filename": "../../shared-data/covert_sessions_795f393a.csv"
+        "filename": "../../shared-data/covert_sessions_795f393a.csv",
+        "accuracy": [
+            0.9701776649746193,
+            0.9644670050761421,
+            0.9670050761421319,
+            0.9644670050761421,
+            0.975253807106599
+        ]
     },
     "a4a2cc9609fa8be95993bb35a2b1bdc0": {
         "params": {
@@ -45,7 +66,14 @@
             "timeout": 0.5,
             "trans": 1
         },
-        "filename": "../../shared-data/covert_sessions_bcab1f93.csv"
+        "filename": "../../shared-data/covert_sessions_bcab1f93.csv",
+        "accuracy": [
+            0.9740963855421687,
+            0.9789156626506024,
+            0.9819277108433735,
+            0.9795180722891567,
+            0.9759036144578314
+        ]
     },
     "7e1424d58a42b35bf04ddfdd411d59e3": {
         "params": {
@@ -53,7 +81,14 @@
             "timeout": 0.5,
             "trans": 1
         },
-        "filename": "../../shared-data/covert_sessions_c9116f64.csv"
+        "filename": "../../shared-data/covert_sessions_c9116f64.csv",
+        "accuracy": [
+            0.963758389261745,
+            0.9711409395973154,
+            0.9718120805369127,
+            0.9677852348993289,
+            0.9671140939597316
+        ]
     },
     "c8e88c5d8444d912108c7dd7f2431e65": {
         "params": {
@@ -61,7 +96,14 @@
             "timeout": 0.5,
             "trans": 1
         },
-        "filename": "../../shared-data/covert_sessions_4b22d4a4.csv"
+        "filename": "../../shared-data/covert_sessions_4b22d4a4.csv",
+        "accuracy": [
+            0.9607843137254902,
+            0.9639468690702088,
+            0.9550917141049968,
+            0.9626818469323213,
+            0.9607843137254902
+        ]
     },
     "9dd5c177b92bece71f31283842cf0e3c": {
         "params": {
@@ -69,6 +111,133 @@
             "timeout": 0.5,
             "trans": 1
         },
-        "filename": "../../shared-data/covert_sessions_49981948.csv"
+        "filename": "../../shared-data/covert_sessions_49981948.csv",
+        "accuracy": [
+            0.9744658676393955,
+            0.979676915059927,
+            0.976029181865555,
+            0.9812402292860865,
+            0.976029181865555
+        ]
+    },
+    "79a36563998d8a08d42944f6cf0a7ac7": {
+        "params": {
+            "window_size": 5,
+            "timeout": 0.01,
+            "trans": 1
+        },
+        "filename": "../../shared-data/covert_sessions_4536c84d.csv",
+        "accuracy": [
+            0.9674711437565582,
+            0.9727177334732424,
+            0.9800629590766002,
+            0.9790136411332634,
+            0.9758656873032528
+        ]
+    },
+    "67cb5ea45f2697600a2edcb25b217e2f": {
+        "params": {
+            "window_size": 5,
+            "timeout": 0.2,
+            "trans": 1
+        },
+        "filename": "../../shared-data/covert_sessions_d1fbb41d.csv",
+        "accuracy": [
+            0.9509536784741145,
+            0.944141689373297,
+            0.94141689373297,
+            0.9332425068119891,
+            0.9509536784741145
+        ]
+    },
+    "65439a290ecb014cebf1b2986b79ff22": {
+        "params": {
+            "window_size": 5,
+            "timeout": 1.0,
+            "trans": 1
+        },
+        "filename": "../../shared-data/covert_sessions_20eb34ff.csv",
+        "accuracy": [
+            0.9872068230277186,
+            0.9872068230277186,
+            0.9861407249466951,
+            0.9840085287846482,
+            0.9797441364605544
+        ]
+    },
+    "7090d2af5df520c81224de75274e24d2": {
+        "params": {
+            "window_size": 5,
+            "timeout": 5.0,
+            "trans": 1
+        },
+        "filename": "../../shared-data/covert_sessions_1aae0a8f.csv",
+        "accuracy": [
+            0.9747292418772563,
+            0.9771359807460891,
+            0.9711191335740073,
+            0.9783393501805054,
+            0.9675090252707581
+        ]
+    },
+    "483b35e3a1a26822aa11bdf516218753": {
+        "params": {
+            "window_size": 5,
+            "timeout": 0.5,
+            "trans": 2
+        },
+        "filename": "../../shared-data/covert_sessions_07a9b3a4.csv",
+        "accuracy": [
+            0.9851222104144527,
+            0.9808714133900106,
+            0.9776833156216791,
+            0.9798087141339001,
+            0.9798087141339001
+        ]
+    },
+    "3b2f7278529b936aa45b27032104f6b8": {
+        "params": {
+            "window_size": 5,
+            "timeout": 0.5,
+            "trans": 3
+        },
+        "filename": "../../shared-data/covert_sessions_f1befaa6.csv",
+        "accuracy": [
+            0.9784172661870504,
+            0.9508393285371702,
+            0.9712230215827338,
+            0.973621103117506,
+            0.9748201438848921
+        ]
+    },
+    "77159aa0d4d9b3727b300b936dbf45be": {
+        "params": {
+            "window_size": 5,
+            "timeout": 0.5,
+            "trans": 4
+        },
+        "filename": "../../shared-data/covert_sessions_39b8651a.csv",
+        "accuracy": [
+            0.9716386554621849,
+            0.9642857142857143,
+            0.976890756302521,
+            0.967436974789916,
+            0.9737394957983193
+        ]
+    },
+    "741c8d0c560430794b67f0ef2fcd4e2e": {
+        "params": {
+            "window_size": 5,
+            "timeout": 0.5,
+            "trans": 5
+        },
+        "filename": "../../shared-data/covert_sessions_695f3947.csv",
+        "accuracy": [
+            0.9876425855513308,
+            0.9876425855513308,
+            0.9904942965779467,
+            0.9885931558935361,
+            0.9895437262357415
+        ]
     }
 }

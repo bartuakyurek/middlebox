@@ -29,7 +29,7 @@ from utils import random_string
 from utils import message_to_bits
 from utils import assign_sequence_number
 from utils import split_message_into_chunks
-from utils import save_session
+from utils import save_session, save_session_csv
 
 class CovertSender:
     def __init__(self, verbose=False, 
@@ -343,7 +343,6 @@ def run_sender(args, **kwargs)->CovertSender:
                           max_udp_payload=udpsize, max_trans=trans)
 
     try:
-
         prob_cov = args.probcov # Probability of sending covert message
         
         if random.random() < prob_cov:
@@ -375,6 +374,10 @@ def run_sender(args, **kwargs)->CovertSender:
                         params=params,
                         outgoing_packets=sender.outgoing_pkt_data
                     )
+        
+        # Also append the data to csv (save_session saves a separate csv)
+        #csvpath = os.path.join(os.environ.get("DATA_PATH"), "covert_sessions.csv") 
+        #save_session_csv(filepath=csvpath, outgoing_packets=sender.outgoing_pkt_data)
         
     except Exception as e:
         print(f"[ERROR] An error occurred on the sender side: {e}")
@@ -423,7 +426,7 @@ if __name__ == '__main__':
 
     args = get_args()
 
-    NUM_RUNS = 1
+    NUM_RUNS = 50
     for i in range(NUM_RUNS):
         print("-"*50)
         start = time.time()
