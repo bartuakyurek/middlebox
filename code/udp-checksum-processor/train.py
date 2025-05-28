@@ -55,11 +55,23 @@ def train(X_train, y_train):
 
     return model
 
-def train_and_test_model(data_csv_path, shuffle_data=False):
+def save_importance_plot(model):
+    # Create feature importance plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    xgb.plot_importance(model, ax=ax)
+    plt.tight_layout()
+
+    # Save to file
+    plt.savefig("feature_importance.png", dpi=300)
+    print("Feature importance plot saved to feature_importance.png")
+
+def train_and_test_model(data_csv_path, shuffle_data=False, save_importance=False):
     X_train, y_train, X_test, y_test = create_train_test_splits(data_csv_path=data_csv_path, shuffle=shuffle_data)
 
     model = train(X_train=X_train, y_train=y_train)
     acc, report, confusion_dict = test(model=model, X_test=X_test, y_test=y_test)
+
+    if save_importance: save_importance_plot(model)
 
     return acc, report, confusion_dict
 
@@ -70,17 +82,11 @@ if __name__ == '__main__':
     data_folder_path = os.environ.get("DATA_PATH")
     data_csv_path = os.path.join(data_folder_path, f"covert_sessions.csv")
 
-    acc, report, confusion_dict = train_and_test_model(data_csv_path=data_csv_path)
+    acc, report, confusion_dict = train_and_test_model(data_csv_path=data_csv_path, 
+                                                       shuffle_data=True, save_importance=True)
 
     print(f"Accuracy: {acc:.4f}")
     print("Classification Report:\n", report)
     print("Confusion matrix:\n", confusion_dict)
 
-    # Create feature importance plot
-    fig, ax = plt.subplots(figsize=(10, 6))
-    xgb.plot_importance(model, ax=ax)
-    plt.tight_layout()
-
-    # Save to file
-    plt.savefig("feature_importance.png", dpi=300)
-    print("Feature importance plot saved to feature_importance.png")
+   
