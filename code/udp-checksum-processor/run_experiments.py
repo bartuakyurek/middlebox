@@ -71,6 +71,8 @@ def _remove_previous_results(metadata_path, param_key, result_key_str):
 
 def run_phase3_experiments(metadata_path):
     
+    NUM_TRIALS =  5 # For confidence intervals, run the same experiment
+
     # Free parameter
     window_sizes = [1, 2, 4, 8, 16, 32]
 
@@ -84,28 +86,27 @@ def run_phase3_experiments(metadata_path):
                     "timeout": timeout,
                     "trans": trans,
                 }
-        
         data_csv_path, param_hash = _get_associated_csv(metadata_path=metadata_path, params=params)
-
 
         # Clean up
         _remove_previous_results(metadata_path=metadata_path, result_key_str="accuracy", param_key=param_hash)
 
-        # Training and test TODO: could you separate train and test? so that you use the same model?
-        model, acc, report, confusion_dict, num_samples = train(data_csv_path=data_csv_path)
+        for _ in range(NUM_TRIALS):
+            # Training and test TODO: could you separate train and test? so that you use the same model?
+            model, acc, report, confusion_dict, num_samples = train(data_csv_path=data_csv_path)
 
-        print(f"Accuracy: {acc:.4f}")
-        print("Classification Report:\n", report)
-        print("Confusion matrix:\n", confusion_dict)
-        print("Total test samples: ", num_samples)
+            print(f"Accuracy: {acc:.4f}")
+            print("Classification Report:\n", report)
+            print("Confusion matrix:\n", confusion_dict)
+            print("Total test samples: ", num_samples)
 
-        # Save the results to .json to plot them later
-        res_str = "accuracy"
-        val = acc
-        _append_results_to_json(json_path=metadata_path, 
-                                param_key=param_hash,
-                                result_key_str=res_str,
-                                result_value=val)
+            # Save the results to .json to plot them later
+            res_str = "accuracy"
+            val = acc
+            _append_results_to_json(json_path=metadata_path, 
+                                    param_key=param_hash,
+                                    result_key_str=res_str,
+                                    result_value=val)
         
     return
 
