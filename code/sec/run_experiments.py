@@ -185,8 +185,8 @@ def run_experiments(args):
     num_trials=5 # Number of runs for each identical configuration
 
     # Test for a small message for now (WARNING: Set carrier length at least x16 more than covert message)
-    CARRIER_MESSAGE = "Hello, this is a test message. " * 500
-    COVERT_MESSAGE = "Covert." * 6
+    CARRIER_MESSAGE = "Hello, this is a test message. " * 600
+    COVERT_MESSAGE = "Covert." * 10
 
     # Parameters to test
     args.probcov = 0.8 # Force only covert if set to 1.0
@@ -197,8 +197,8 @@ def run_experiments(args):
     args.overt = CARRIER_MESSAGE # Override them to test for small messages
     args.covert = COVERT_MESSAGE
     run_single_param_experiment(args, 'window', window_sizes, num_trials)
-    #run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
-    #run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
+    run_single_param_experiment(args, 'timeout', timeout_values, num_trials)
+    run_single_param_experiment(args, 'trans', max_allowed_transmissions, num_trials)
 
 if __name__ == "__main__":
     
