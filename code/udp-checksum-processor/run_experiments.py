@@ -59,6 +59,15 @@ def _append_results_to_json(json_path, param_key, result_key_str, result_value):
     metadata[param_key] = data_dict
     _dump_metadata(metadata=metadata, metadata_path=json_path)
 
+def get_metric_from_json(json_path, param_key, metric_key_str="accuracy"):
+    metadata = _get_metadata(json_path=json_path)
+    data_dict = metadata[param_key]
+
+    metric_values = []
+    if metric_key_str in data_dict:
+        metric_values = data_dict[metric_key_str]
+    return metric_values
+
 def _remove_previous_results(metadata_path, param_key, result_key_str):
     metadata = _get_metadata(json_path=metadata_path)
     data_dict = metadata[param_key]
@@ -69,12 +78,17 @@ def _remove_previous_results(metadata_path, param_key, result_key_str):
     metadata[param_key] = data_dict
     _dump_metadata(metadata=metadata, metadata_path=metadata_path)
 
-def run_phase3_experiments(metadata_path):
+
+def plot_phase3_experiments():
+    pass
+
+def run_phase3_experiments(metadata_path, clean_previous=False, plot_results=True):
     
-    NUM_TRIALS =  5 # For confidence intervals, run the same experiment
+    NUM_TRIALS =  0 # For confidence intervals, run the same experiment
 
     # Free parameter
-    window_sizes = [1, 2, 4, 8, 16, 32]
+    free_parameter_name = "window_size"
+    free_param_values = window_sizes = [1, 2, 4, 8, 16, 32]
 
     # Fixed parameters (from default args)
     timeout = 0.5
@@ -88,8 +102,8 @@ def run_phase3_experiments(metadata_path):
                 }
         data_csv_path, param_hash = _get_associated_csv(metadata_path=metadata_path, params=params)
 
-        # Clean up
-        _remove_previous_results(metadata_path=metadata_path, result_key_str="accuracy", param_key=param_hash)
+        if clean_previous:
+            _remove_previous_results(metadata_path=metadata_path, result_key_str="accuracy", param_key=param_hash)
 
         for _ in range(NUM_TRIALS):
             # Training and test TODO: could you separate train and test? so that you use the same model?
@@ -107,8 +121,40 @@ def run_phase3_experiments(metadata_path):
                                     result_key_str=res_str,
                                     result_value=val)
         
-    return
+    if plot_results:
+        metric_name = "accuracy"
+        x = free_param_values
+        y_lists = []
+        for window in window_sizes:
+            params = {
+                    "window_size": window,
+                    "timeout": timeout,
+                    "trans": trans,
+            }
+            param_hash = _hash_params(params)
+            metric_values = get_metric_from_json(json_path=metadata_path, param_key=param_hash, metric_key_str=metric_name)
+            y_lists.append(metric_values
+                           )
+        # Plot 
+        figure_path = "metric_plot.png"
 
+        means = [np.mean(vals) for vals in y_lists]
+        stds = [np.std(vals, ddof=1) for vals in y_lists]
+        conf_intervals = [1.96 * (std / np.sqrt(len(vals))) for std, vals in zip(stds, y_lists)]
+
+        plt.figure(figsize=(8, 5))
+        plt.errorbar(x, means, yerr=conf_intervals, fmt='o-', color='teal', ecolor='lightgray', capsize=5)
+        plt.xlabel(f"{free_parameter_name}")
+        plt.ylabel("Accuracy")
+        plt.title("Accuracy with 95% Confidence Intervals")
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig(figure_path)
+        print(f"[INFO] Plot saved to {figure_path}")
+
+#def plot_experiments(metadata_path, result_key="accuracy"):
+    
+        
 
 if __name__ == '__main__':
 
