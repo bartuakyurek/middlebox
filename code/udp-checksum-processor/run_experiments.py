@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import json
 import hashlib
 
-from train import train
+from train import train_and_test_model
 
  # TODO: could utils.py be in shared data path? to avoid duplicates
 # -------------------------------------------------------------------
@@ -93,12 +93,11 @@ def run_phase3_experiments(metadata_path):
 
         for _ in range(NUM_TRIALS):
             # Training and test TODO: could you separate train and test? so that you use the same model?
-            model, acc, report, confusion_dict, num_samples = train(data_csv_path=data_csv_path)
+            acc, report, confusion_dict = train_and_test_model(data_csv_path=data_csv_path, shuffle_data=True)
 
             print(f"Accuracy: {acc:.4f}")
             print("Classification Report:\n", report)
             print("Confusion matrix:\n", confusion_dict)
-            print("Total test samples: ", num_samples)
 
             # Save the results to .json to plot them later
             res_str = "accuracy"
