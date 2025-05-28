@@ -59,6 +59,16 @@ def _append_results_to_json(json_path, param_key, result_key_str, result_value):
     metadata[param_key] = data_dict
     _dump_metadata(metadata=metadata, metadata_path=json_path)
 
+def _remove_previous_results(metadata_path, param_key, result_key_str):
+    metadata = _get_metadata(json_path=metadata_path)
+    data_dict = metadata[param_key]
+
+    if result_key_str in data_dict:
+        data_dict[result_key_str] = []
+    
+    metadata[param_key] = data_dict
+    _dump_metadata(metadata=metadata, metadata_path=metadata_path)
+
 def run_phase3_experiments(metadata_path):
     
     # Free parameter
@@ -76,6 +86,12 @@ def run_phase3_experiments(metadata_path):
                 }
         
         data_csv_path, param_hash = _get_associated_csv(metadata_path=metadata_path, params=params)
+
+
+        # Clean up
+        _remove_previous_results(metadata_path=metadata_path, result_key_str="accuracy", param_key=param_hash)
+
+        # Training and test TODO: could you separate train and test? so that you use the same model?
         model, acc, report, confusion_dict, num_samples = train(data_csv_path=data_csv_path)
 
         print(f"Accuracy: {acc:.4f}")
