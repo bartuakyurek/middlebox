@@ -157,8 +157,11 @@ if __name__ == '__main__':
     default_params = {"window_size" : 5,
                       "timeout": 0.5, 
                       "trans" : 1} # WARNING: Should be the same as default in sender.py
-    free_param_name = "window_size"
-    free_param_values =  [1, 2, 4, 8, 16, 32]
+    
+    selected_experiment_idx = 0
+    experiments = [("window_size", [1, 2, 4, 8, 16, 32])] # Array of tuples (free_param, val)
+
+    free_param_name, free_param_values =  experiments[selected_experiment_idx]
     param_dicts = get_experimental_parameters(default_params_dict=default_params, free_param_str=free_param_name, free_param_values=free_param_values)
     
     # Run experiments
