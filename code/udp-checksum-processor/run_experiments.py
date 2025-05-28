@@ -10,12 +10,19 @@ import hashlib
 
 from train import train
 
-
+ # TODO: could utils.py be in shared data path? to avoid duplicates
+# -------------------------------------------------------------------
 def _hash_params(params):
     # This should be the same in sec/utils.py
-    # TODO: could utils.py be in shared data path? to avoid duplicates
+   
     param_str = json.dumps(params, sort_keys=True)
     return hashlib.md5(param_str.encode()).hexdigest()
+
+def _dump_metadata(metadata, metadata_path):
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=4)
+    print(f"[INFO] New session saved. Metadata updated: {metadata_path}")
+# -------------------------------------------------------------------
 
 def _get_metadata(json_path):
     if os.path.exists(json_path):
@@ -29,14 +36,28 @@ def _get_associated_csv(metadata_path, params):
     metadata = _get_metadata(metadata_path)
     param_hash = _hash_params(params)
 
-    print("Param hash: ", param_hash)
-    print("Metadata keys: ", metadata.keys())
     if param_hash in metadata:
         csv_path = metadata[param_hash]["filename"] # Read csv_path from metadata
         print(f"[INFO] Found associated dataset in {csv_path}")
-        return csv_path
+        return csv_path, param_hash
     else:
         raise KeyError("Parameters ", params, " not found in dataset!")
+
+def _append_results_to_json(json_path, param_key, result_key_str, result_value):
+    
+    metadata = _get_metadata(json_path=json_path)
+    data_dict = metadata[param_key]
+
+    if result_key_str in data_dict:
+        previous_results = data_dict[result_key_str]
+        previous_results.append(result_value)
+        data_dict[result_key_str] = previous_results
+    else:
+        # Create a new entry
+        data_dict[result_key_str] = [result_value]
+
+    metadata[param_key] = data_dict
+    _dump_metadata(metadata=metadata, metadata_path=json_path)
 
 def run_phase3_experiments(metadata_path):
     
@@ -54,7 +75,7 @@ def run_phase3_experiments(metadata_path):
                     "trans": trans,
                 }
         
-        data_csv_path = _get_associated_csv(metadata_path=metadata_path, params=params)
+        data_csv_path, param_hash = _get_associated_csv(metadata_path=metadata_path, params=params)
         model, acc, report, confusion_dict, num_samples = train(data_csv_path=data_csv_path)
 
         print(f"Accuracy: {acc:.4f}")
@@ -62,6 +83,14 @@ def run_phase3_experiments(metadata_path):
         print("Confusion matrix:\n", confusion_dict)
         print("Total test samples: ", num_samples)
 
+        # Save the results to .json to plot them later
+        res_str = "accuracy"
+        val = acc
+        _append_results_to_json(json_path=metadata_path, 
+                                param_key=param_hash,
+                                result_key_str=res_str,
+                                result_value=val)
+        
     return
 
 
