@@ -163,7 +163,9 @@ if __name__ == '__main__':
                    ("trans", [1, 2, 3, 4, 5] )] # Array of tuples (free_param, val)
 
     selected_experiments = [0, 1, 2] # indices of experiments list above
-
+    
+    plot_only = True # Do not run experiments, show only plots based on saved data
+    
     # Run selected experiments
     for selected_experiment_idx in selected_experiments:
         free_param_name, free_param_values =  experiments[selected_experiment_idx]
@@ -171,7 +173,8 @@ if __name__ == '__main__':
         param_dicts = get_experimental_parameters(default_params_dict=default_params, free_param_str=free_param_name, free_param_values=free_param_values)
         
         # Run particular experiment
-        run_phase3_experiments(metadata_path=metadata_path, param_dicts=param_dicts)
+        if not plot_only:
+            run_phase3_experiments(metadata_path=metadata_path, param_dicts=param_dicts)
 
         # Plot experiments
         metric_name = "accuracy"
