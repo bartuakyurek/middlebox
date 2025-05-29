@@ -98,7 +98,7 @@ def plot_phase3_experiments(free_parameter_name,
     stds = [np.std(vals, ddof=1) for vals in y_lists]
     conf_intervals = [1.96 * (std / np.sqrt(len(vals))) for std, vals in zip(stds, y_lists)]
     plt.figure(figsize=(8, 5))
-    plt.errorbar(x, means, yerr=conf_intervals, fmt='o-', color='teal', ecolor='lightgray', capsize=5)
+    plt.errorbar(x, means, yerr=conf_intervals, fmt='o-', color='teal', ecolor='red', capsize=5)
     plt.xlabel(f"{free_parameter_name}")
     plt.ylabel("Accuracy")
     plt.title("Accuracy with 95% Confidence Intervals")
