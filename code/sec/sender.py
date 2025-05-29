@@ -311,7 +311,7 @@ class CovertSender:
    
 
 
-def run_sender(args, **kwargs)->CovertSender:
+def run_sender(args, save_session_bool=False, **kwargs)->CovertSender:
     # Create a CovertSender object and send the covert message
     #  
     # See get_args() to configure default arguments
@@ -370,10 +370,12 @@ def run_sender(args, **kwargs)->CovertSender:
                     "timeout": timeout,
                     "trans": trans,
                 }
-        save_session(
-                        params=params,
-                        outgoing_packets=sender.outgoing_pkt_data
-                    )
+        
+        if save_session_bool:
+            save_session(
+                            params=params,
+                            outgoing_packets=sender.outgoing_pkt_data
+                        )
         
         # Also append the data to csv (save_session saves a separate csv)
         #csvpath = os.path.join(os.environ.get("DATA_PATH"), "covert_sessions.csv") 
@@ -401,7 +403,7 @@ def get_args():
     default_window_size = 5
     default_max_transmissions = 1
     default_timeout = 0.5   # seconds
-    default_covert_prob = 0.8 # Set 1 to always send covert
+    default_covert_prob = 1 # Set 1 to always send covert
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="print intermediate steps", action="store_true", default=False)
@@ -424,13 +426,14 @@ def get_args():
 if __name__ == '__main__':
     import time
 
+    save_session = False
     args = get_args()
 
-    NUM_RUNS = 50
+    NUM_RUNS = 1
     for i in range(NUM_RUNS):
         print("-"*50)
         start = time.time()
-        sender = run_sender(args)
+        sender = run_sender(args, save_session_bool=save_session)
         end = time.time()
 
         elapsed_secs = end - start
