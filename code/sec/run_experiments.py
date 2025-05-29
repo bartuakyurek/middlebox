@@ -55,7 +55,7 @@ def run_and_retrieve_statistics(args, num_trials)-> dict:
     #return capacity
 
 def change_one_arg_and_run(args, arg_name, arg_values, num_trials, 
-                           exclude_args=['verbose', 'overt', 'covert', 'udpsize']):
+                           exclude_args=['verbose', 'overt', 'covert', 'udpsize', 'probcov']):
     # Change one argument and run the sender
     # Parameters:
     # ------------------------------------------------------------
