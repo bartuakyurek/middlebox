@@ -12,6 +12,7 @@ whether or not the receiver fully got the message, rather it relies
 on its mechanism to ensure the packets are sent correctly.
 """
 import copy
+import time
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
@@ -22,8 +23,8 @@ from sender import run_sender, get_args, assert_type # TODO: move assert to util
 def get_metric_units(metric_name):
     if metric_name == 'capacity':
         return 'bits/packet'
-    elif metric_name == 'RTT':
-        return 'ms'
+    elif metric_name == 'bps_capacity':
+        return 'bits/second'
     elif metric_name == 'timeout':
         return 'sec'
     else:
@@ -44,11 +45,24 @@ def run_and_retrieve_statistics(args, num_trials)-> dict:
     
     stats = {}
     stats['capacity'] = []
-    
+    stats['bps_capacity'] = []
     for i in range(num_trials):
+
+        start = time.time()
         sender = run_sender(args) 
+        end = time.time()
+        elapsed_secs = end - start
+
+        print(f"Sending took {elapsed_secs:.2f} seconds.")
+        print(f"Sent {sender.session_covert_bits_len} covert bits.")
+        print("Covert Channel capacity: ")
         cap = sender.get_capacity() 
+        bps_cap = sender.session_covert_bits_len / elapsed_secs 
+        print(f"\t {bps_cap:.2f} covert bits per second.")
+        print(f"\t {cap:.2f} covert bits per packet.")
+        
         stats['capacity'].append(cap)
+        stats['bps_capacity'].append(bps_cap)
         print(f"[INFO] Trial {i+1}/{num_trials} - Capacity: {cap}")
     return stats
     #capacity = sender.get_capacity()
@@ -189,7 +203,7 @@ def run_experiments(args):
     COVERT_MESSAGE = "Covert." * 10
 
     # Parameters to test
-    args.probcov = 0.8 # Force only covert if set to 1.0
+    args.probcov = 1. # Force only covert if set to 1.0
     window_sizes = [1, 2, 4, 8, 16, 32]
     timeout_values = [0.01, 0.2, 1.0, 5.0]
     max_allowed_transmissions = [1, 2, 3, 4, 5] 
