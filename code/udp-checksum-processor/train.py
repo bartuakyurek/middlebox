@@ -20,7 +20,7 @@ def create_train_test_splits(data_csv_path, test_size=0.2, random_state=None, sh
     df["checksum_entropy"] = df["checksum"].apply(lambda x: len(set(str(x))) / len(str(x)) if len(str(x)) > 0 else 0)
 
     # Select features and labels
-    features = ["checksum"] #["timestamp", "checksum", "length"] #["length", "delta_time", "checksum_entropy"]
+    features = ["checksum", "delta_time", "checksum_entropy"] #["length", "delta_time", "checksum_entropy"]
 
     # Train-test split
     X = df[features]
